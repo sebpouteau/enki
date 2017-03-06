@@ -234,7 +234,8 @@ namespace Enki
 		viscousMomentFrictionCoefficient(0.01),
 		angle(0),
 		angSpeed(0),
-		interlacedDistance(0)
+		interlacedDistance(0),
+		id(0)
 	{
 		setCylindric(1, 1, 1);
 	}
@@ -719,7 +720,8 @@ namespace Enki
 		color(color),
 		groundTexture(groundTexture),
 		takeObjectOwnership(true),
-		bluetoothBase(NULL)
+		bluetoothBase(NULL),
+		idNewObject(1)
 	{
 	}
 	
@@ -731,10 +733,11 @@ namespace Enki
 		color(color),
 		groundTexture(groundTexture),
 		takeObjectOwnership(true),
-		bluetoothBase(NULL)
+		bluetoothBase(NULL),
+		idNewObject(1)
 	{
 	}
-	
+
 	World::World() :
 		wallsType(WALLS_NONE),
 		w(0),
@@ -742,7 +745,8 @@ namespace Enki
 		r(0),
 		color(Color::gray),
 		takeObjectOwnership(true),
-		bluetoothBase(NULL)
+		bluetoothBase(NULL),
+		idNewObject(1)
 	{
 	}
 
@@ -1228,6 +1232,10 @@ namespace Enki
 	
 	void World::addObject(PhysicalObject *o)
 	{
+		if (o->getId() == 0){
+			o->id = idNewObject;
+			idNewObject++;
+		}
 		objects.insert(o);
 	}
 
