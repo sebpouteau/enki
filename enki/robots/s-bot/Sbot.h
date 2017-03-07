@@ -106,6 +106,8 @@ namespace Enki
 		//! the sound interaction, based on global frequencies
 		SbotGlobalSound globalSound;
 
+        virtual void serialize(std::ostringstream* oss, const bool first) const;
+
 	public:
 		//! Constructor
 		Sbot();

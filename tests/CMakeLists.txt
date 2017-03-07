@@ -46,3 +46,6 @@ add_test(deserialize serialization "Deserialization")
 
 add_executable(serializationBenchmarks serializationBenchmarks.cpp Randomizer.cpp)
 target_link_libraries(serializationBenchmarks enki)
+
+add_executable(serializationBenchmarksClass serializationBenchmarksClass.cpp Randomizer.cpp)
+target_link_libraries(serializationBenchmarksClass catch enki)

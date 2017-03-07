@@ -63,6 +63,9 @@ namespace Enki
 		~Marxbot() {}
 		//! Return the value of a virtual bumper
 		double getVirtualBumper(unsigned number);
+
+        void serialize(std::ostringstream* oss, const bool first) const;
+
 	};
 
 }

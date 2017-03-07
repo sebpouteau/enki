@@ -102,9 +102,13 @@ namespace Enki
 		void setLedIntensity(LedIndex ledIndex, double intensity = 1.f);
 		void setLedColor(LedIndex ledIndex, const Color& color = Color(1.,1.,1.,1.));
 		Color getColorLed(LedIndex ledIndex) const;
+        virtual void serialize(std::ostringstream* oss, const bool first) const;
+        virtual void deserialize(const std::string& strThymio, const bool first);
 
 	protected:
 		Color ledColor[LED_COUNT];
+
+
 	};
 }
 

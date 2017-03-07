@@ -43,7 +43,7 @@
 #include <set>
 #include <vector>
 #include <valarray>
-
+#include "Factory.h"
 
 /*!	\file PhysicalEngine.h
 	\brief The core of Enki.
@@ -254,6 +254,9 @@ namespace Enki
 			Hull& operator+=(const Hull& that);
 			//! Compute the shape of this hull wrt a particular rotation and translation, update the radius if provided
 			void applyTransformation(const Matrix22& rot, const Point& trans, double* radius = 0);
+
+            void serialize(std::ostringstream* oss) const;
+            static PhysicalObject::Hull deserialize(const std::string& strHull, int* pos);
 		};
 		
 	private:		// variables
@@ -378,6 +381,12 @@ namespace Enki
 
     private:
         int id;
+
+    public:
+        virtual void serialize(std::ostringstream* oss, const bool first) const;
+        virtual void deserialize(const std::string& strUpdate, const bool first);
+     
+
 	};
 
 	//! A robot is a PhysicalObject that has additional interactions and a controller.
@@ -408,6 +417,11 @@ namespace Enki
 		virtual void doGlobalInteractions(double dt, World* w);
 		//! Sort local interactions. Called by addLocalInteraction ; can be called by subclasses in case of interaction radius change.
 		void sortLocalInteractions(void);
+
+    public:
+        virtual void serialize(std::ostringstream* oss, const bool first) const;
+        virtual void deserialize(const std::string& strUpdate, const bool first);
+
 	};
 
 	//! The world is the container of all objects and robots.
@@ -453,6 +467,10 @@ namespace Enki
 			GroundTexture();
 			//! build a texture from an existing pointer
 			GroundTexture(unsigned width, unsigned height, const uint32_t* data);
+
+            void serialize(std::ostringstream* oss) const;
+            static GroundTexture deserialize( const std::string& strGroundTexture, int indice);
+
 		};
 		
 		//! Current ground texture
@@ -516,7 +534,19 @@ namespace Enki
 	protected:
 		//! Can implement world specific control. By default do nothing
 		virtual void controlStep(double dt) { }
+        
+    public:
+        static World* initWorld(const std::string& strWorld);
 
+        std::string serialize(bool fisrt);
+        void deserialize(const std::string& strSerialize, bool first);
+
+    private:
+        void updateObject(const std::string str, bool first);
+      
+    
+
+        
     private:
         int idNewObject;
 	};

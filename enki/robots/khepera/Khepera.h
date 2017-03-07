@@ -83,6 +83,9 @@ namespace Enki
 	public:
 		//! Create a Khepera with certain modules aka capabilities (basic)
 		Khepera(unsigned capabilities = CAPABILITIY_BASIC_SENSORS);
+
+        void serialize(std::ostringstream* oss, const bool first) const;
+
 	};
 }
 

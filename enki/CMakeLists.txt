@@ -24,6 +24,7 @@ add_library(enki
 	robots/s-bot/SbotObject.cpp
 	robots/marxbot/Marxbot.cpp
 	robots/thymio2/Thymio2.cpp
+    Factory.cpp
 )
 
 set_target_properties(enki PROPERTIES VERSION ${LIB_VERSION_STRING} 

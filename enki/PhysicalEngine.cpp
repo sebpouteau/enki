@@ -31,13 +31,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "Factory.h"
 #include "PhysicalEngine.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <algorithm>
 #include <limits>
-
+#include "Serialize.h"
 // _________________________________
 //
 // Implementation of PhysicalObject
@@ -192,10 +193,10 @@ namespace Enki
 			convexHull.push_back(*candidate);
 			points.erase(candidate);
 		}
-		
+
 		return convexHull;
 	}
-	
+
 	PhysicalObject::Hull PhysicalObject::Hull::operator+(const Hull& that) const
 	{
 		Hull newHull(*this);
@@ -203,14 +204,14 @@ namespace Enki
 			newHull.push_back(*it);
 		return newHull;
 	}
-	
+
 	PhysicalObject::Hull& PhysicalObject::Hull::operator+=(const Hull& that)
 	{
 		for (const_iterator it = that.begin(); it != that.end(); ++it)
 			push_back(*it);
 		return *this;
 	}
-	
+
 	void PhysicalObject::Hull::applyTransformation(const Matrix22& rot, const Point& trans, double* radius)
 	{
 		if (radius)
@@ -220,26 +221,26 @@ namespace Enki
 			it->applyTransformation(rot, trans, radius);
 		}
 	}
-	
+
 	// PhysicalObject
-	
+
 	const double PhysicalObject::g = 9.81;
-	
+
 	PhysicalObject::PhysicalObject(void) :
-		userData(NULL),
-		// default physical parameters
-		collisionElasticity(0.9),
-		dryFrictionCoefficient(0.25),
-		viscousFrictionCoefficient(0.01),
-		viscousMomentFrictionCoefficient(0.01),
-		angle(0),
-		angSpeed(0),
-		interlacedDistance(0),
-		id(0)
+	userData(NULL),
+	// default physical parameters
+	collisionElasticity(0.9),
+	dryFrictionCoefficient(0.25),
+	viscousFrictionCoefficient(0.01),
+	viscousMomentFrictionCoefficient(0.01),
+	angle(0),
+	angSpeed(0),
+	interlacedDistance(0),
+	id(0)
 	{
 		setCylindric(1, 1, 1);
 	}
-	
+
 	PhysicalObject::~PhysicalObject(void)
 	{
 		if (userData && (userData->deletedWithObject))
@@ -247,7 +248,7 @@ namespace Enki
 			delete userData;
 		}
 	}
-	
+
 	void PhysicalObject::dirtyUserData()
 	{
 		if (userData)
@@ -256,43 +257,43 @@ namespace Enki
 			userData = 0;
 		}
 	}
-	
+
 	void PhysicalObject::setCylindric(double radius, double height, double mass)
 	{
 		// remove any hull
 		hull.clear();
 		this->height = height;
-		
+
 		// update the physical and interaction radius
 		r = radius;
-		
+
 		// set the mass
 		this->mass = mass;
-		
+
 		// update the moment of inertia
 		computeMomentOfInertia();
-		
+
 		dirtyUserData();
 	}
-	
+
 	void PhysicalObject::setRectangular(double l1, double l2, double height, double mass)
 	{
 		// assign a new hull
 		hull.resize(1, Part(l1, l2, height));
 		this->height = height;
-		
+
 		// compute the center of mass
 		setupCenterOfMass();
-		
+
 		// set the mass
 		this->mass = mass;
-		
+
 		// update the moment of inertia
 		computeMomentOfInertia();
-		
+
 		dirtyUserData();
 	}
-	
+
 	void PhysicalObject::setCustomHull(const Hull& hull, double mass)
 	{
 		// assign the new hull
@@ -300,27 +301,27 @@ namespace Enki
 		height = 0;
 		for (Hull::const_iterator it = hull.begin(); it != hull.end(); ++it)
 			height = std::max(height, it->getHeight());
-		
+
 		// compute the center of mass
 		setupCenterOfMass();
-		
+
 		// set the mass
 		this->mass = mass;
-		
+
 		// update the moment of inertia
 		computeMomentOfInertia();
-		
+
 		dirtyUserData();
 	}
-	
+
 	void PhysicalObject::setColor(const Color &color)
 	{
 		this->color = color;
-		
+
 		dirtyUserData();
-		
+
 	}
-	
+
 	void PhysicalObject::computeMomentOfInertia()
 	{
 		if (hull.empty())
@@ -342,52 +343,52 @@ namespace Enki
 							momentOfInertia += ix * ix + iy * iy;
 							numericalArea++;
 						}
-			
+
 			momentOfInertia *= mass / numericalArea;
-			
+
 			// Exact method:
 			/*
-			TODO: check this and implement
-			http://lab.polygonal.de/2006/08/17/calculating-the-moment-of-inertia-of-a-convex-polygon/
-			*/
+			 TODO: check this and implement
+			 http://lab.polygonal.de/2006/08/17/calculating-the-moment-of-inertia-of-a-convex-polygon/
+			 */
 		}
 	}
-	
+
 	void PhysicalObject::setupCenterOfMass()
 	{
 		if (hull.empty())
 			return;
-		
+
 		// Numerical method:
 		/*
-		// get bounding box of the whole hull
-		Point bottomLeft, topRight;
-		Hull::iterator it = hull.begin();
-		bool validBB = it->shape.getAxisAlignedBoundingBox(bottomLeft, topRight);
-		assert(validBB);
-		++it;
-		for (;it != hull.end(); ++it)
+		 // get bounding box of the whole hull
+		 Point bottomLeft, topRight;
+		 Hull::iterator it = hull.begin();
+		 bool validBB = it->shape.getAxisAlignedBoundingBox(bottomLeft, topRight);
+		 assert(validBB);
+		 ++it;
+		 for (;it != hull.end(); ++it)
 			it->shape.extendAxisAlignedBoundingBox(bottomLeft, topRight);
-		
-		// numerically compute the center of mass of the shape
-		Point cm;
-		double area = 0;
-		const double dx = (topRight-bottomLeft).x / 100;
-		const double dy = (topRight-bottomLeft).y / 100;
-		for (double ix = bottomLeft.x; ix < topRight.x; ix += dx)
+
+		 // numerically compute the center of mass of the shape
+		 Point cm;
+		 double area = 0;
+		 const double dx = (topRight-bottomLeft).x / 100;
+		 const double dy = (topRight-bottomLeft).y / 100;
+		 for (double ix = bottomLeft.x; ix < topRight.x; ix += dx)
 			for (double iy = bottomLeft.y; iy < topRight.y; iy += dy)
-				for (it = hull.begin(); it != hull.end(); ++it)
-					if (it->shape.isPointInside(Point(ix, iy)))
-					{
-						cm.x += ix;
-						cm.y += iy;
-						area++;
-					}
-		assert(area != 0);
-		cm /= area;
-		area = area / (dx * dy);
-		*/
-		
+		 for (it = hull.begin(); it != hull.end(); ++it)
+		 if (it->shape.isPointInside(Point(ix, iy)))
+		 {
+		 cm.x += ix;
+		 cm.y += iy;
+		 area++;
+		 }
+		 assert(area != 0);
+		 cm /= area;
+		 area = area / (dx * dy);
+		 */
+
 		// Exact method:
 		Point cm;
 		double area = 0;
@@ -399,7 +400,7 @@ namespace Enki
 			area += partArea;
 		}
 		cm /= area;
-		
+
 		// FIXME: this shift is really ugly. We can only do it for non-robots
 		// because otherwise the local interactions are missplaced.
 		Robot* robot(dynamic_cast<Robot*>(this));
@@ -414,7 +415,7 @@ namespace Enki
 			hull.applyTransformation(Matrix22::identity(), Vector(), &r);
 		}
 	}
-	
+
 	void PhysicalObject::computeTransformedShape()
 	{
 		if (!hull.empty())
@@ -424,8 +425,8 @@ namespace Enki
 				it->computeTransformedShape(rotMat, pos);
 		}
 	}
-	
-	
+
+
 	static double sgn(double v)
 	{
 		if (v > 0)
@@ -436,74 +437,74 @@ namespace Enki
 			return 0;
 	}
 
-	#if 0
+#if 0
 	void PhysicalObject::physicsStep(double dt)
 	{
 		// NOTE: not used for now, see later if we should remove or not
-		
+
 		/*applyForces(dt);
-		
-		pos += speed * dt;
-		angle += angSpeed * dt;
-		*/
+
+		 pos += speed * dt;
+		 angle += angSpeed * dt;
+		 */
 		/* TODO: Runge-Kutta
 			but this needs a refactoring in order to harvest equations up to now.
 			furthermore, we have a so simple model that it is seldom useful for now.
-		xn+1 = xn + h⁄6 (a + 2 b + 2 c + d)  where 
-		a = f (tn, xn)
-		b = f (tn + h⁄2, xn + h⁄2 a)
-		c = f (tn + h⁄2, xn + h⁄2 b)
-		d = f (tn + h, xn + h c)
-		*/
+		 xn+1 = xn + h⁄6 (a + 2 b + 2 c + d)  where
+		 a = f (tn, xn)
+		 b = f (tn + h⁄2, xn + h⁄2 a)
+		 c = f (tn + h⁄2, xn + h⁄2 b)
+		 d = f (tn + h, xn + h c)
+		 */
 	}
-	#endif
-	
+#endif
+
 	void PhysicalObject::controlStep(double dt)
 	{
 		interlacedDistance = 0.;
 	}
-	
+
 	void PhysicalObject::applyForces(double dt)
 	{
 		/*
-		Temporary not used as there is no intrinsic force for now
-		The only force available are the friction ones below
-		// static friction
-		const double minSpeedForMovement = 0.001;
-		if ((speed.norm2() < minSpeedForMovement * minSpeedForMovement) && 
+		 Temporary not used as there is no intrinsic force for now
+		 The only force available are the friction ones below
+		 // static friction
+		 const double minSpeedForMovement = 0.001;
+		 if ((speed.norm2() < minSpeedForMovement * minSpeedForMovement) &&
 			(abs(angSpeed) < minSpeedForMovement) &&
 			(acc.norm2() * mass < staticFrictionThreshold * staticFrictionThreshold) &&
 			(angAcc * momentOfInertia < staticFrictionThreshold))
-		{
+		 {
 			// fully stop movement
 			acc = 0.;
 			angAcc = 0.;
 			speed = 0.;
 			angSpeed = 0.;
 			return;
-		}*/
-		
+		 }*/
+
 		Vector acc = 0.;
 		double angAcc = 0.;
-		
+
 		// dry friction, set speed to zero if bigger
 		Vector dryFriction = - speed.unitary() * g * dryFrictionCoefficient;
 		if ((dryFriction * dt).norm2() > speed.norm2())
 			speed = 0.;
 		else
 			acc += dryFriction;
-		
+
 		// dry rotation friction, set angSpeed to zero if bigger
 		double dryAngFriction = - sgn(angSpeed) * g * dryFrictionCoefficient;
 		if ((fabs(dryAngFriction) * dt) > fabs(angSpeed))
 			angSpeed = 0.;
 		else
 			angAcc += dryAngFriction;
-		
+
 		// viscous friction
 		acc += - speed * viscousFrictionCoefficient;
 		angAcc += - angSpeed * viscousMomentFrictionCoefficient;
-		
+
 		// el cheapos integration
 		speed += acc * dt;
 		angSpeed += angAcc * dt;
@@ -512,12 +513,12 @@ namespace Enki
 	void PhysicalObject::initPhysicsInteractions(double dt)
 	{
 		computeTransformedShape();
-		
+
 		applyForces(dt);
-		
+
 		pos += speed * dt;
 		angle += angSpeed * dt;
-		
+
 		// store position after integration
 		posBeforeCollision  = pos;
 	}
@@ -528,17 +529,17 @@ namespace Enki
 		interlacedDistance += (posBeforeCollision - pos).norm();
 		angle = normalizeAngle(angle);
 	}
-	
-	
+
+
 	void PhysicalObject::collideWithStaticObject(const Vector &n, const Point &cp)
 	{
 		// only perform physics if we are in a physically-realistic collision situation,
 		if (n * speed > 0)
 		{
-			//std::cerr << this << " Warning collideWithStaticObject " << std::endl; 
+			//std::cerr << this << " Warning collideWithStaticObject " << std::endl;
 			return;
 		}
-		
+
 		// from http://www.myphysicslab.com/collision.html
 		const Vector r_ap = (cp - pos);
 		const Vector v_ap = speed + r_ap.crossFromZVector(angSpeed);
@@ -547,7 +548,7 @@ namespace Enki
 		const double j = num / denom;
 		speed += (n * j) / mass;
 		angSpeed += r_ap.cross(n * j) / momentOfInertia;
-		
+
 		// call the collision callback
 		collisionEvent(0);
 	}
@@ -582,12 +583,12 @@ namespace Enki
 				return;
 			}
 		}
-		
+
 		if ((dist * speed > 0) || (dist * that.speed < 0))
 		{
 			//std::cerr << this << " Warning collideWithObject" << std::endl;
 		}
-		
+
 		// only perform physics if we are in a physically-realistic collision situation,
 		// otherwise we experience a simulation artefact and we just deinterlace
 		//if ((dist * speed <= 0) && (dist * that.speed >= 0))
@@ -596,18 +597,18 @@ namespace Enki
 			// we use model from http://www.myphysicslab.com/collision.html
 			// this is object A, that is object B
 			const Vector n = dist.unitary();
-			
+
 			const Vector r_ap = (cp - pos);
 			const Vector r_bp = (cp - that.pos);
-			
+
 			const Vector v_ap = speed + r_ap.crossFromZVector(angSpeed);
 			const Vector v_bp = that.speed + r_bp.crossFromZVector(that.angSpeed);
 			const Vector v_ab = v_ap - v_bp;
-			
+
 			const double num = -(1 + collisionElasticity * that.collisionElasticity) * (v_ab * n);
 			const double denom = (1/mass) + (1/that.mass) + (r_ap.cross(n) * r_ap.cross(n)) / momentOfInertia + (r_bp.cross(n) * r_bp.cross(n)) / that.momentOfInertia;
 			const double j = num / denom;
-			
+
 			speed += (n * j) / mass;
 			that.speed -= (n * j) / that.mass;
 			angSpeed += r_ap.cross(n * j) / momentOfInertia;
@@ -615,17 +616,170 @@ namespace Enki
 		}
 		//else
 		//	std::cerr << "Non physics collideWithObject between " << this << " and " << &that << std::endl;
-		
+
 		// call the collision callback
 		collisionEvent(&that);
 		that.collisionEvent(this);
-		
+
 		// FIXME: this is fully non physic
 		// calculate deinterlace vector to put that out of contact - mass ratios ensure physics
 		const double massSum = mass + that.mass;
 		pos += dist*that.mass/massSum;
 		that.pos -= dist*mass/massSum;
 	}
+
+	// Serialization
+	void PhysicalObject::serialize(std::ostringstream* oss, bool first) const
+	{
+		oss->precision(PRECISION);
+		oss->setf(std::ios::fixed);
+
+        *oss << static_cast<int>(Factory::TypeObject::PHYS_OBJ) << TYPE_SEPARATOR
+		<< id << TYPE_SEPARATOR;
+
+		serializePoint(pos, oss);
+		*oss << angle << TYPE_SEPARATOR;
+		getColor().serialize(oss);
+
+		if (first){
+			*oss << isCylindric() << TYPE_SEPARATOR;
+			if (isCylindric()) { // (hull.empty() == true)
+				*oss << getRadius() << TYPE_SEPARATOR
+				<< getHeight() << TYPE_SEPARATOR
+				<< getMass() << TYPE_SEPARATOR;
+				getColor().serialize(oss);
+			} else {
+				hull.serialize(oss);
+				*oss << getMass() << TYPE_SEPARATOR;
+			}
+		}
+		*oss << OBJECT_SEPARATOR;
+
+	}
+
+	void PhysicalObject::deserialize(const std::string& strPhysObj, bool first)
+	{
+		std::vector<std::string> obj = findSeparator(strPhysObj, TYPE_SEPARATOR);
+		int position = 2;
+
+		pos.x = stod(obj[position++]);
+		pos.y = stod(obj[position++]);
+
+		angle = stod(obj[position++]); //getValue(pos1, pos2, strPhysObj);
+		color = Color(obj, &position);
+		
+		if (first){
+		int isCylindric = stod(obj[position++]); //getValue(pos1, pos2, strPhysObj);
+
+		if (isCylindric) {
+			double radius = stod(obj[position++]); //getValue(pos1, pos2, strPhysObj);
+
+			double height = stod(obj[position++]); //getValue(pos1, pos2, strPhysObj);
+
+			double mass = stod(obj[position++]); //getValue(pos1, pos2, strPhysObj);
+
+			setCylindric(radius, height, mass);
+			setColor(Color(obj, &position));
+
+		} else {
+			PhysicalObject::Hull hull = Hull::deserialize(strPhysObj, &position);
+
+			double mass = stod(obj[position++]);//getValue(pos1, pos2, strPhysObj);
+
+			setCustomHull(hull, mass);
+		}
+		}
+	}
+//
+	//void PhysicalObject::deserializeUpdate(const std::string& strPhysObj)
+	//{
+//		size_t pos1 = -1, pos2 = -1;
+//
+//		findSeparator(&pos1, &pos2, strPhysObj, TYPE_SEPARATOR);
+//		double x = getValue(pos1, pos2, strPhysObj);
+//		findSeparator(&pos1, &pos2, strPhysObj, TYPE_SEPARATOR);
+//		double y = getValue(pos1, pos2, strPhysObj);
+//		pos = Point(x, y);
+//
+//		findSeparator(&pos1, &pos2, strPhysObj, TYPE_SEPARATOR);
+//		angle = getValue(pos1, pos2, strPhysObj);
+//
+	//}
+//
+//	// ==== Hull ====
+	void PhysicalObject::Hull::serialize(std::ostringstream* oss) const
+	{
+		// Hull is a std::vector<Part>
+		*oss << size() << TYPE_SEPARATOR;
+
+		for (auto& d: *this){
+		//for (size_t i = 0; i < size(); ++i) {
+			// Un Polygone est un std::vector<Point>
+			const Polygone& shape =  d.getShape();
+			*oss << shape.size() << TYPE_SEPARATOR;
+			for (size_t j = 0; j < shape.size(); ++j) {
+				serializePoint(shape[j], oss);
+			}
+
+			*oss << d.getHeight() << TYPE_SEPARATOR;
+
+			*oss << d.isTextured() << TYPE_SEPARATOR;
+			if (d.isTextured()) {
+				// Une textures est un std::vector<Texture>
+				const Textures& textures = d.getTextures();
+				*oss << textures.size() << TYPE_SEPARATOR;
+				for (size_t j = 0; j < textures.size(); ++j) {
+					// Une texture est un std::vector<Color>
+					Texture texture = textures[j];
+					*oss << texture.size() << TYPE_SEPARATOR;
+					for (size_t i = 0; i < texture.size(); ++i) {
+						texture[i].serialize(oss);
+					}
+				}
+			}
+		}
+	}
+
+	PhysicalObject::Hull PhysicalObject::Hull::deserialize(const std::string& strHull, int *pos)
+	{
+		PhysicalObject::Hull hull= PhysicalObject::Hull();
+
+		std::vector<std::string> obj = findSeparator(strHull, TYPE_SEPARATOR);
+
+		int nb_hull = stod(obj[*pos]); *pos += 1;//getValue(*pos1, *pos2, strHull);
+		for (int i = 0; i < nb_hull; ++i) {
+			Polygone shape;
+			int nb_polygone = stod(obj[*pos]); *pos += 1; //getValue(*pos1, *pos2, strHull);
+			for (int j = 0; j < nb_polygone; ++j) {
+				double x = stod(obj[*pos]); *pos += 1; //getValue(*pos1, *pos2, strHull);
+				double y = stod(obj[*pos]); *pos += 1; // getValue(*pos1, *pos2, strHull);
+				shape << Point(x, y);
+			}
+
+			int height = stod(obj[*pos]); *pos += 1;//getValue(*pos1, *pos2, strHull);
+
+			int isTextured = stod(obj[*pos]); *pos += 1;//getValue(*pos1, *pos2, strHull);
+			if (isTextured) {
+				Textures textures;
+				int nb_texture = stod(obj[*pos]); *pos += 1;//getValue(*pos1, *pos2, strHull);
+				for (int j = 0; j < nb_texture; ++j) {
+					Texture texture;
+					int nb_color = stod(obj[*pos]); *pos += 1;// getValue(*pos1, *pos2, strHull);
+					for (int k = 0; k < nb_color; ++k) {
+						texture.push_back(Color(obj, pos));
+					}
+					textures.push_back(texture);
+				}
+
+				hull += PhysicalObject::Hull(PhysicalObject::Part(shape, height, textures));
+			} else {
+				hull += PhysicalObject::Hull(PhysicalObject::Part(shape, height));
+			}
+		}
+		return hull;
+	}
+
+
 
 	//! A functor then compares the radius of two local interactions
 	struct InteractionRadiusCompare
@@ -643,7 +797,7 @@ namespace Enki
 		localInteractions.push_back(li);
 		sortLocalInteractions();
 	}
-	
+
 	void Robot::sortLocalInteractions(void)
 	{
 		// instantiate the compare function object
@@ -700,53 +854,76 @@ namespace Enki
 			globalInteractions[i]->step(dt, w);
 		}
 	}
-	
+
+
+	void Robot::serialize(std::ostringstream* oss, const bool first) const{
+		oss->precision(PRECISION);
+		oss->setf(std::ios::fixed);
+		*oss << getId() << TYPE_SEPARATOR;
+		serializePoint(pos, oss);
+		*oss << angle << TYPE_SEPARATOR;
+		*oss << OBJECT_SEPARATOR;
+
+	}
+	void Robot::deserialize(const std::string& str, const bool first){
+		std::vector<std::string> tabObj = findSeparator(str, TYPE_SEPARATOR);
+		int position = 0;
+
+		// ignore Type and Position
+		position += 2;
+		pos.x = stod(tabObj[position++]);
+		pos.y = stod(tabObj[position++]);
+
+		angle = stod(tabObj[position++]);
+	}
+
+
 	World::GroundTexture::GroundTexture():
-		width(0),
-		height(0)
+	width(0),
+	height(0)
 	{}
-	
+
 	World::GroundTexture::GroundTexture(unsigned width, unsigned height, const uint32_t* data):
-		width(width),
-		height(height),
-		data(data, data+width*height)
+	width(width),
+	height(height),
+	data(data, data+width*height)
 	{}
 
 	World::World(double width, double height, const Color& color, const GroundTexture& groundTexture) :
-		wallsType(WALLS_SQUARE),
-		w(width),
-		h(height),
-		r(0),
-		color(color),
-		groundTexture(groundTexture),
-		takeObjectOwnership(true),
-		bluetoothBase(NULL),
-		idNewObject(1)
+	wallsType(WALLS_SQUARE),
+	w(width),
+	h(height),
+	r(0),
+	color(color),
+	groundTexture(groundTexture),
+	takeObjectOwnership(true),
+	bluetoothBase(NULL),
+	idNewObject(1)
 	{
 	}
-	
+
 	World::World(double r, const Color& color, const GroundTexture& groundTexture) :
-		wallsType(WALLS_CIRCULAR),
-		w(0),
-		h(0),
-		r(r),
-		color(color),
-		groundTexture(groundTexture),
-		takeObjectOwnership(true),
-		bluetoothBase(NULL),
-		idNewObject(1)
+	wallsType(WALLS_CIRCULAR),
+	w(0),
+	h(0),
+	r(r),
+	color(color),
+	groundTexture(groundTexture),
+	takeObjectOwnership(true),
+	bluetoothBase(NULL),
+	idNewObject(1)
 	{
 	}
 
 	World::World() :
-		wallsType(WALLS_NONE),
-		w(0),
-		h(0),
-		r(0),
-		color(Color::gray),
-		takeObjectOwnership(true),
-		bluetoothBase(NULL),
-		idNewObject(1)
+	wallsType(WALLS_NONE),
+	w(0),
+	h(0),
+	r(0),
+	color(Color::gray),
+	takeObjectOwnership(true),
+	bluetoothBase(NULL),
+	idNewObject(1)
 	{
 	}
 
@@ -755,16 +932,16 @@ namespace Enki
 		if (takeObjectOwnership)
 			for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 				delete (*i);
-		
+
 		if (bluetoothBase)
 			delete bluetoothBase;
 	}
-	
+
 	bool World::hasGroundTexture() const
 	{
 		return !groundTexture.data.empty();
 	}
-	
+
 	Color World::getGroundColor(const Point& p) const
 	{
 		if (groundTexture.data.empty() || wallsType == WALLS_NONE)
@@ -782,42 +959,42 @@ namespace Enki
 		}
 		else
 			abort();
-		
+
 		if (texX < 0 || texX >= groundTexture.width || texY < 0 || texY >= groundTexture.height)
 			return color;
 		uint32_t data = groundTexture.data[texY * groundTexture.width + texX];
 		return Color::fromARGB(data);
 	}
-	
+
 	/*
-	Texture of world walls is disabled now, re-enable a proper support if required
-	void World::setWallsColor(const Color& color)
-	{
+	 Texture of world walls is disabled now, re-enable a proper support if required
+	 void World::setWallsColor(const Color& color)
+	 {
 		for (size_t i = 0; i < 4; i++)
-			wallTextures[i].resize(1, color);
-	}
-	*/
-	
+	 wallTextures[i].resize(1, color);
+	 }
+	 */
+
 	bool World::isPointInside(const Point &p, const Point &c, const Polygone &bs, Vector *distVector)
 	// p = candidate point of object; c = pos of object; bs = bounding surface of other object; distVector = deinterlacing dist to be calculated
 	{
 		// Segment 1 from points c to d
 		const Point d = p;
 		bool intersection_found = false;
-		 
+
 		for (size_t i=0; i<bs.size(); i++)
 		{
 			const size_t next = (i+1)%bs.size();
 			// Segment 2 from points a to b
 			const Point a(bs[i].x, bs[i].y);
 			const Point b(bs[next].x, bs[next].y);
-			
-			// test if segments 1 and 2 overlap 
+
+			// test if segments 1 and 2 overlap
 			// see: Real-time collision detection, C. Ericson, Page 152-153
-			
+
 			const double a1 = getTriangleAreaTwice(a,b,d);
 			const double a2 = getTriangleAreaTwice(a,b,c);
-			
+
 			if (a1 * a2 < 0.0f)
 			{
 				const double a3 = getTriangleAreaTwice(c,d,a);
@@ -826,26 +1003,26 @@ namespace Enki
 				{
 					// Segments 1 and 2 intersect
 					intersection_found = true;
-					
+
 					const double dist = getTriangleHeight(a,b,d); // TODO: abs necessary?
-					
+
 					if (dist < 0)
 					{
 						// both c and p are outside bs
-						// the intersection can be handled when checking the points of bs					
-						return false; 
+						// the intersection can be handled when checking the points of bs
+						return false;
 					}
-					
-					Vector n = (b-a).perp().unitary();			
-					*distVector = n * (-dist); // TODO: ok that we modify this even if we might return false??						
+
+					Vector n = (b-a).perp().unitary();
+					*distVector = n * (-dist); // TODO: ok that we modify this even if we might return false??
 					/*
 						std::cout << "Hull: " << bs << std::endl;
 						std::cout << "i: " << i << std::endl;
-						std::cout << "next: " << next << std::endl;						
+						std::cout << "next: " << next << std::endl;
 						std::cout << "p: " << p  << std::endl;
-						std::cout << "c: " << c  << std::endl;	
-						assert(false);					
-					*/
+						std::cout << "c: " << c  << std::endl;
+						assert(false);
+					 */
 				}
 			}
 		}
@@ -887,11 +1064,11 @@ namespace Enki
 			for (PhysicalObject::Hull::const_iterator it = object->hull.begin(); it != object->hull.end(); ++it)
 			{
 				const Polygone& shape = it->getTransformedShape();
-				
+
 				// let's assume walls are infinite
 				Point cp1, cp2; // cp1 is on x, cp2 is on y
 				Vector cp;
-				
+
 				double dist = 0;
 				double n = 0;
 				for (size_t i=0; i<shape.size(); i++)
@@ -918,7 +1095,7 @@ namespace Enki
 					object->collideWithStaticObject(Vector(n, 0), cp);
 					object->pos.x += dist;
 				}
-				
+
 				dist = 0;
 				n = 0;
 				for (size_t i=0; i<shape.size(); i++)
@@ -948,7 +1125,7 @@ namespace Enki
 			}
 		}
 	}
-	
+
 	void World::collideWithCircularWalls(PhysicalObject *object)
 	{
 		const double r2 = r * r;
@@ -993,7 +1170,7 @@ namespace Enki
 			// TODO: verify this code
 		}
 	}
-	
+
 	void World::collideCircleWithShape(PhysicalObject *circularObject, PhysicalObject *shapedObject, const Polygone &shape)
 	{
 		// test if circularObject is inside a shape
@@ -1026,7 +1203,7 @@ namespace Enki
 		double pointInsideD2 = r2;
 		Point pointInside;
 		Vector centerToPointInside;
-		
+
 		// test if there is vertex of shape is inside the circularObject. If so, take the closest to the center
 		for (unsigned i=0; i<shape.size(); i++)
 		{
@@ -1080,7 +1257,7 @@ namespace Enki
 						const Point& shape2Centroid = jt->getTransformedCentroid();
 						const Polygone& shape2 = jt->getTransformedShape();
 						// TODO: move this into a polygone collision function
-						
+
 						// look in both directions
 						for (size_t i = 0; i < shape1.size(); i++)
 						{
@@ -1097,7 +1274,7 @@ namespace Enki
 								}
 							}
 						}
-						
+
 						for (size_t i=0; i < shape2.size(); i++)
 						{
 							const Point &candidate = shape2[i];
@@ -1138,7 +1315,7 @@ namespace Enki
 			const double dLength = distOCtoOC.norm();
 			dist = ud * (addedRay-dLength);
 			collisionPoint = object2->pos + ud * object2->r;
-			
+
 			object1->collideWithObject(*object2, collisionPoint, dist);
 			return;
 		}
@@ -1161,7 +1338,7 @@ namespace Enki
 			// init physics interactions
 			for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 				(*i)->initPhysicsInteractions(overSampledDt);
-			
+
 			// collide objects together
 			unsigned iCounter, jCounter;
 			iCounter = 0;
@@ -1178,7 +1355,7 @@ namespace Enki
 				}
 				iCounter++;
 			}
-			
+
 			// collide objects with walls and physics step
 			for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 			{
@@ -1191,7 +1368,7 @@ namespace Enki
 				(*i)->finalizePhysicsInteractions(overSampledDt);
 			}
 		}
-		
+
 		// init non-physics interactions
 		for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 		{
@@ -1222,20 +1399,24 @@ namespace Enki
 			o->finalizeGlobalInteractions(dt, this);
 			o->controlStep(dt);
 		}
-		
+
 		// do a control step for the world
 		controlStep(dt);
 		// TODO: cleanup this
 		if (bluetoothBase)
 			bluetoothBase->step(dt, this);
 	}
-	
+
 	void World::addObject(PhysicalObject *o)
 	{
 		if (o->getId() == 0){
 			o->id = idNewObject;
 			idNewObject++;
 		}
+		else if (idNewObject < o->getId()){
+			idNewObject = o->getId() + 1;
+		}
+
 		objects.insert(o);
 	}
 
@@ -1243,30 +1424,207 @@ namespace Enki
 	{
 		objects.erase(o);
 	}
-	
+
 	void World::disconnectExternalObjectsUserData()
 	{
 		for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 			if ((*i)->userData && (!(*i)->userData->deletedWithObject))
 				(*i)->userData = 0;
 	}
-	
+
 	void World::setRandomSeed(unsigned long seed)
 	{
 		random.setSeed(seed);
 	}
-	
+
 	void World::initBluetoothBase()
 	{
 		bluetoothBase = new BluetoothBase();
 	}
-	
+
 	BluetoothBase* World::getBluetoothBase()
 	{
 		if (!bluetoothBase)
 			bluetoothBase = new BluetoothBase();
-	
+
 		return bluetoothBase;
 	}
-}
 
+	void World::GroundTexture::serialize(std::ostringstream* oss) const
+	{
+		*oss << width << TYPE_SEPARATOR
+		<< height << TYPE_SEPARATOR;
+
+		*oss << data.size() << TYPE_SEPARATOR;
+
+		for (int i = 0; i < data.size(); ++i) {
+			*oss << data[i] << TYPE_SEPARATOR;
+		}
+
+	}
+
+	World::GroundTexture World::GroundTexture::deserialize(const std::string& strGroundTexture , int indice)
+	{
+
+		std::vector<std::string> obj = findSeparator( strGroundTexture, TYPE_SEPARATOR);
+		double height = stod(obj[indice]);
+
+		double width = stod(obj[indice+1]);
+		int nb_data = stod(obj[indice+2]);
+		std::vector<uint32_t> data;
+		for (int i = 0; i < nb_data; ++i) {
+			data.push_back(stod(obj[indice + 3 + i]));
+		}
+		uint32_t* bits = (uint32_t *)data.data();
+
+		return World::GroundTexture(width, height, bits);
+	}
+
+
+	World* World::initWorld(const std::string& strSerialize)
+	{
+
+		std::vector<std::string> obj = findSeparator(strSerialize, OBJECT_SEPARATOR);
+		int numObj = 0;
+
+		std::vector<std::string> tabWorld = findSeparator(obj[0], TYPE_SEPARATOR);
+
+		int pos = 0;
+		int wallsType = stod(tabWorld[pos++]);
+
+		World* world;
+
+		switch (wallsType)
+		{
+			case World::WALLS_SQUARE:
+			{
+				double w = stod(tabWorld[pos++]);
+				double h = stod(tabWorld[pos++]);
+
+				Color color = Color(tabWorld, &pos);
+
+				World::GroundTexture groundTexture = World::GroundTexture::deserialize(obj[numObj], pos);
+				world = new World(w, h, color, groundTexture);
+				break;
+			}
+			case World::WALLS_CIRCULAR:
+			{
+				double r = stod(tabWorld[pos++]);
+
+				Color color = Color(tabWorld, &pos);
+
+				World::GroundTexture groundTexture = World::GroundTexture::deserialize(obj[numObj], pos);
+				world = new World(r, color, groundTexture);
+			}
+			default:
+				world = new World();
+		}
+		world->deserialize(strSerialize, true);
+		return world;
+	}
+
+
+	void World::deserialize(const std::string& strSerialize, bool first){
+
+		std::vector<std::string> tabObj = findSeparator(strSerialize, OBJECT_SEPARATOR);
+		//int pos = 1;
+		//int type_object = stod(tabObj[pos++]);
+
+		int i = 0;
+		if (first)
+			i = 1;
+		for ( ; i < tabObj.size(); ++i) {
+			std::vector<std::string> tmpObj = findSeparator(tabObj[i], TYPE_SEPARATOR);
+			int pos = 1;
+
+			int id = stod(tmpObj[pos++]);
+            Factory factory;
+			if (first){
+				PhysicalObject* o = factory.initObject(tmpObj);
+				o->id = id;
+				addObject(o);
+			}
+
+			updateObject(tabObj[i], first);
+
+//			int pos = 0;
+//			
+//			int type_object = stod(tmpObj[pos++]);
+//			int id = stod(tmpObj[pos++]);
+//			switch (type_object) {
+//				case (int)TypeObject::THYMIO2:
+//					if (first){
+//						Thymio2 *t = new Thymio2();
+//						t->id = id;
+//						addObject(t);
+//					}
+//					for (auto& obj : objects){
+//						if (obj->id == id){
+//							Thymio2* t = dynamic_cast<Thymio2*>(obj);
+//							t->deserialize(tabObj[i], true);
+//							break;
+//						}
+//					}
+//					break;
+//
+//				default:
+//					break;
+//			}
+
+		}
+	}
+
+
+	std::string World::serialize(bool first){
+		std::ostringstream* oss = new std::ostringstream();
+
+		oss->precision(PRECISION);
+		oss->setf(std::ios::fixed);
+
+		if (first)
+		{
+			*oss << wallsType << TYPE_SEPARATOR;
+
+			switch (wallsType)
+			{
+				case World::WALLS_SQUARE:
+					*oss << w << TYPE_SEPARATOR
+					<< h << TYPE_SEPARATOR;
+					break;
+				case World::WALLS_CIRCULAR:
+					*oss << r << TYPE_SEPARATOR;
+					break;
+				default:
+					break;
+			}
+
+
+			color.serialize(oss);
+			groundTexture.serialize(oss);
+
+			*oss << OBJECT_SEPARATOR;
+		}
+
+		for (auto& object : objects)
+		{
+			object->serialize(oss, first);
+		}
+		return oss->str();
+	}
+
+
+	void World::updateObject(const std::string str, bool first){
+		std::vector<std::string> tabObj = findSeparator(str, TYPE_SEPARATOR);
+		int pos = 0;
+		
+		int type_object = stod(tabObj[pos++]);
+		int id = stod(tabObj[pos++]);
+		for (auto& obj : objects){
+
+			if (obj->getId() == id){
+				obj->deserialize(str, first);
+				break;
+			}
+		}
+	}
+}

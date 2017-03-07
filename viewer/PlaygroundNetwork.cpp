@@ -26,6 +26,13 @@
 #include <thread>
 #include <unistd.h>
 #include <viewer/Viewer.h>
+#include <enki/robots/thymio2/thymio2.h>
+#include <enki/robots/s-bot/Sbot.h>
+#include <enki/robots/e-puck/EPuck.h>
+#include <enki/robots/marxbot/Marxbot.h>
+#include <enki/robots/khepera/Khepera.h>
+
+
 
 using namespace Enki;
 using namespace Dashel;
@@ -71,15 +78,26 @@ int main(int argc, char* argv[])
 		}
 		else // server
 		{
-			World* world = new World(120, 90, Color(0.9, 0.9, 0.9), World::GroundTexture());
+			World* world = new World(330, 150, Color(0.9, 0.9, 0.9), World::GroundTexture());
+
+            std::vector<Color> c;
+            c.push_back(Enki::Color::black);
+            c.push_back(Enki::Color::white);
+            c.push_back(Enki::Color::red);
+            c.push_back(Enki::Color::green);
+            c.push_back(Enki::Color::blue);
+            c.push_back(Enki::Color::gray);
 
 			// Add Thymio
-			Thymio2 *thymio = new Thymio2;
-			thymio->pos = Point(0, 0);
+            Thymio2 *thymio ;
+            /*for (int i = 0; i < 50; i++) {
 
-			thymio->setLedColor(Thymio2::TOP, Enki::Color::green);
-			thymio->setLedColor(Thymio2::BOTTOM_LEFT, Enki::Color::red);
-			thymio->setLedColor(Thymio2::BOTTOM_RIGHT, Enki::Color::blue);
+             thymio = new Thymio2;
+			thymio->pos = Point( UniformRand(20, 300)(), UniformRand(20, 150)());
+
+			thymio->setLedColor(Thymio2::TOP, c[UniformRand(0, c.size())()]);
+			thymio->setLedColor(Thymio2::BOTTOM_LEFT, c[UniformRand(0, c.size())()]);
+			thymio->setLedColor(Thymio2::BOTTOM_RIGHT, c[UniformRand(0, c.size())()]);
 
 			thymio->setLedIntensity(Thymio2::BUTTON_UP, 1.0);
 			thymio->setLedIntensity(Thymio2::BUTTON_DOWN, 1.0);
@@ -114,6 +132,29 @@ int main(int argc, char* argv[])
 			thymio->rightSpeed = 4;
 
 			world->addObject(thymio);
+            }
+
+
+            for (int i = 0; i < 50; i++) {
+
+            PhysicalObject* o = new PhysicalObject;
+            PhysicalObject::Hull hull;
+            hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(5,1) << Point(-5,1) << Point(-5,-1) << Point(5,-1), 2));
+            hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(1,5) << Point(-1,5) << Point(-1,-5) << Point(1,-5), 4));
+            o->setCustomHull(hull, 60);
+            o->setColor(Color(0.2, 0.4, 0.6));
+            o->collisionElasticity = 0.2;
+            o->pos = Point(UniformRand(20, 300)(), UniformRand(20, 150)());
+            world->addObject(o);
+            }*/
+            Sbot* s = new Sbot();
+            world->addObject(s);
+            EPuck *epuck = new EPuck();
+            world->addObject(epuck);
+            Marxbot* m = new Marxbot();
+            Khepera* k = new Khepera();
+            world->addObject(m);
+            world->addObject(k);
 
 			Server* server = new Server(world);
 			thread threadServer([server]() { server->run(); });

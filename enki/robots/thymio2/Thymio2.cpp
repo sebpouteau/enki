@@ -36,6 +36,7 @@
 #include <functional>
 #include <climits>
 #include <math.h>
+#include "../../Serialize.h"
 
 /*! \file Thymio2.cpp
 	\brief Implementation of the Thymio II robot
@@ -163,5 +164,41 @@ namespace Enki
 		else
 			return ledColor[ledIndex];
 	}
+    
+    void Thymio2::serialize(ostringstream* oss, const bool first) const
+    {
+        oss->precision(PRECISION);
+        oss->setf(std::ios::fixed);
+
+        *oss << static_cast<int>(Factory::TypeObject::THYMIO2) << TYPE_SEPARATOR
+        			<< getId() << TYPE_SEPARATOR;
+        
+        serializePoint(pos, oss);
+        *oss << angle << TYPE_SEPARATOR;
+        
+        *oss << Thymio2::LED_COUNT << TYPE_SEPARATOR;
+        for (int i = 0; i < Thymio2::LED_COUNT; ++i) {
+            getColorLed((Thymio2::LedIndex)i).serialize(oss);
+        }
+        
+        *oss << OBJECT_SEPARATOR;
+    }
+
+    void Thymio2::deserialize(const string& strThymio, const bool first)
+    {
+        std::vector<std::string> tmpObj = findSeparator(strThymio, TYPE_SEPARATOR);
+
+        // Ignorate 2 first argmuments
+        int position = 2;
+        pos.x = stod(tmpObj[position++]);//deserializePoint(&pos1, &pos2, strThymio);
+        pos.y = stod(tmpObj[position++]);
+
+        angle = stod(tmpObj[position++]);//getValue(pos1, pos2, strThymio);
+        
+        int nb_led = stod(tmpObj[position++]);
+        for (int i = 0; i < nb_led; i++) {
+            setLedColor((Thymio2::LedIndex)i, Color(tmpObj, &position));
+        }
+    }
 }
 
