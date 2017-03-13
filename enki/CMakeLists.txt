@@ -11,6 +11,7 @@ add_library(enki
 	BluetoothBase.cpp
 	Serialize.cpp
 	Network.cpp
+	Factory.cpp
 	interactions/IRSensor.cpp
 	interactions/GroundSensor.cpp
 	interactions/CircularCam.cpp

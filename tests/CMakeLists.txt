@@ -42,7 +42,7 @@ add_executable(serialization serialization.cpp Randomizer.cpp)
 target_link_libraries(serialization catch enki)
 
 add_test(serialize serialization "Serialization")
-add_test(deserialize serialization "Deserialization")
+#add_test(deserialize serialization "Deserialization")
 
 add_executable(serializationBenchmarks serializationBenchmarks.cpp Randomizer.cpp)
 target_link_libraries(serializationBenchmarks enki)

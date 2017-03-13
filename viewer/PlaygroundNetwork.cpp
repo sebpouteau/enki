@@ -26,6 +26,11 @@
 #include <thread>
 #include <unistd.h>
 #include <viewer/Viewer.h>
+#include <enki/robots/thymio2/Thymio2.h>
+#include <enki/robots/s-bot/Sbot.h>
+#include <enki/robots/e-puck/EPuck.h>
+#include <enki/robots/khepera/Khepera.h>
+#include <enki/robots/marxbot/Marxbot.h>
 
 using namespace Enki;
 using namespace Dashel;

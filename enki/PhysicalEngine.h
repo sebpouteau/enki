@@ -43,6 +43,7 @@
 #include <set>
 #include <vector>
 #include <valarray>
+#include "Factory.h"
 
 
 /*!	\file PhysicalEngine.h
@@ -254,6 +255,11 @@ namespace Enki
 			Hull& operator+=(const Hull& that);
 			//! Compute the shape of this hull wrt a particular rotation and translation, update the radius if provided
 			void applyTransformation(const Matrix22& rot, const Point& trans, double* radius = 0);
+            
+			//! Return a serialization of Hull
+			void serialize(std::ostringstream* oss) const;
+			//! Deserialize a Hull from a string, pos corresponds to the beginning of the hull in the string
+			static PhysicalObject::Hull deserialize(const std::string& strHull, int* pos);
 		};
 		
 	private:		// variables
@@ -381,6 +387,12 @@ namespace Enki
 		// be possible to associate client objects with their corresponding ones
 		// on the server even if they don't have the same pointer address.
 		int id;
+        
+    public:
+		//! Return a serialization of PhysicalObject (for serialize init first = true, else first = false)
+		virtual void serialize(std::ostringstream* oss, const bool first) const;
+		//! Deserialize a PhysicalObject from a string (for deserialize init first = true, else first = false)
+		virtual void deserialize(const std::string& strPhysicalObject, const bool first);
 	};
 
 	//! A robot is a PhysicalObject that has additional interactions and a controller.
@@ -411,6 +423,12 @@ namespace Enki
 		virtual void doGlobalInteractions(double dt, World* w);
 		//! Sort local interactions. Called by addLocalInteraction ; can be called by subclasses in case of interaction radius change.
 		void sortLocalInteractions(void);
+        
+	public:
+		//! Return a serialization of Robot
+		void serializeRobot(std::ostringstream* oss) const;
+		//! Deserialize a world from a Robot
+		void deserializeRobot(const std::string& strRobot, int *position);
 	};
 
 	//! The world is the container of all objects and robots.
@@ -456,6 +474,11 @@ namespace Enki
 			GroundTexture();
 			//! build a texture from an existing pointer
 			GroundTexture(unsigned width, unsigned height, const uint32_t* data);
+            
+			//! Return a serialization of GroundTexture (for serialize init first = true, else first = false)
+			void serialize(std::ostringstream* oss) const;
+			//! Deserialize a world from a string (for deserialize init first = true, else first = false)
+			static GroundTexture deserialize(const std::string& strGroundTexture, int indice);
 		};
 		
 		//! Current ground texture
@@ -520,8 +543,20 @@ namespace Enki
 		//! Can implement world specific control. By default do nothing
 		virtual void controlStep(double dt) { }
 
+    private:
+        int idNewObject;
+        
+	public:
+		//! Return a new World with all object contained in string strworld
+		static World* initWorld(const std::string& strWorld);
+		//! Return a serialization of world (for serialize init first = true, else first = false)
+		std::string serialize(bool fisrt);
+		//! Deserialize a world from a string (for deserialize init first = true, else first = false)
+		void deserialize(const std::string& strSerialize, bool first);
+        
 	private:
-		int idNewObject;
+		//! Deserialize all object of the world from a string str (for deserialize init first = true, else first = false)
+		void updateObject(const std::string str, bool first);
 	};
 	
 	//! Fast random for use by Enki

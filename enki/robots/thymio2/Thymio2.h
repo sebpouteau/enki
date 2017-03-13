@@ -102,7 +102,11 @@ namespace Enki
 		void setLedIntensity(LedIndex ledIndex, double intensity = 1.f);
 		void setLedColor(LedIndex ledIndex, const Color& color = Color(1.,1.,1.,1.));
 		Color getColorLed(LedIndex ledIndex) const;
-
+        
+		//! Return a serialization of Thymio (for serialize init first = true, else first = false)
+		virtual void serialize(std::ostringstream* oss, const bool first) const;
+		//! Deserialize a Thymio from a string (for deserialize init first = true, else first = false)
+		virtual void deserialize(const std::string& strUpdate, const bool first);
 	protected:
 		Color ledColor[LED_COUNT];
 	};

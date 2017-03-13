@@ -73,5 +73,18 @@ namespace Enki
 		unsigned physicalNumber = (24 + 12 - number) % 24;
 		return marxbotVirtualBumperResponseFunction(sqrt(rotatingDistanceSensor.zbuffer[(physicalNumber * 180) / 24]) - getRadius());
 	}
+	
+	void Marxbot::serialize(std::ostringstream* oss, const bool first) const{
+		*oss << static_cast<int>(Factory::TypeObject::MARXBOT) << TYPE_SEPARATOR<< getId() << TYPE_SEPARATOR;
+		Robot::serialize(oss, first);
+		*oss << OBJECT_SEPARATOR;
+	}
+
+	void Marxbot::deserialize(const std::string& strMarxbot, const bool first)
+	{
+		// Ignorate 2 first argmuments
+		int position = 2;
+		Robot::deserializeRobot(strMarxbot, &position);
+	}
 }
 

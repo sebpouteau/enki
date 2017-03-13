@@ -19,7 +19,9 @@
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
-#include <enki/robots/thymio2/Thymio2.h>
+#include "Geometry.h"
+#include <sstream>
+#include <iostream>
 
 /*! \file Serialize.h
     \brief The serialization & deserialization
@@ -33,49 +35,17 @@
       eg: int;float;double;
 */
 
-enum ROBOT_TYPES { WORLD, THYMIO2, PHYSICAL_OBJECT };
+#define PRECISION 2 // Precision of a double (2 digits after the decimal point).
 
 const char OBJECT_SEPARATOR = ':';
-const char MEMBER_SEPARATOR = '&';
 const char TYPE_SEPARATOR = ';';
 
 namespace Enki
 {
-	//! Return the string serialization of world
-	std::string serialize(World *world);
-	//! Return a World with its objects with the string serialization.
-	World* deserialize(std::string strSerialization);
-	//! Update the world with the string serialization.
-	void deserializeUdpate(World * world, std::string strUpdate);
-
-	//! Serialize the world and add the string serialization to the oss
-	void serializeWorld(World *world, std::ostringstream* oss);
-	//! Serialize objects of the world and add the string serialization to the oss
-	void serializeObjects(World *world, std::ostringstream* oss);
-	//! Serialize the Thymio and add the string serialization to the oss
-	void serializeThymio(Thymio2 *thymio, std::ostringstream* oss);
-	//! Serialize the PhysicalObject and add the string serialization to the oss
-	void serializePhysObj(PhysicalObject* po, std::ostringstream* oss);
-	//! Serialize the Color and add the string serialization to the oss
-	void serializeColor(const Color &color, std::ostringstream* oss);
-	//! Serialize the Point and add the string serialization to the oss
-	void serializePoint(const Point &pos, std::ostringstream* oss);
-
-	//! Return a World without objects with the string serialization.
-	World* deserializeWorld(std::string strWorld);
-	//! Complete the world with objects with the string serialization.
-	void deserializeObjects (World* world, std::string strObjects);
-	//! Return a Thymio with the string serialization.
-	Thymio2* deserializeThymio(std::string strThymio);
-	//! Return a PhysicalObject with the string serialization.
-	PhysicalObject* deserializePhysObj(std::string strPo);
-	//! Return a Color with the string serialization.
-	Color deserializeColor(std::string strColor);
-	//! Return a Point with the string serialization.
-	Point deserializePoint(std::string strPoint);
-
-	//! Return the value (double)
-	double getValue(size_t pos1, size_t pos2, std::string strValue);
+    //! Return a serialization of Point
+    void serializePoint(const Point &pos, std::ostringstream* oss);
+    //! Return a vector contains substring Resulting from the separation of the string by s separator
+    std::vector<std::string> split(const std::string& str, const char& separator);
 }
 
 #endif // SERIALIZE_H

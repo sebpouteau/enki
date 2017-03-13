@@ -145,7 +145,7 @@ stats serializeIt(double (*func)(void*), void* param, int iteration)
 double globalSerialization(void* w)
 {
 	World* world = (World*) w;
-	string data = serialize(world);
+	string data = world->serialize(true);
 
 	return data.size();
 }
@@ -157,7 +157,7 @@ double thymioSerialization(void* t)
 {
 	Thymio2* thymio = (Thymio2*) t;
 	ostringstream* output = new ostringstream();
-	serializeThymio(thymio, output);
+	thymio->serialize(output, true);
 
 	return output->str().size();
 }
@@ -166,7 +166,7 @@ double colorSerialization(void* c)
 {
 	Color* color = (Color*) c;
 	ostringstream* output = new ostringstream();
-	serializeColor(*color, output);
+	color->serialize(output);
 
 	return output->str().size();
 }
@@ -188,10 +188,10 @@ stats deserializeIt(double (*func) (void*), void* param, int iteration)
 
 double globalDeserialization(void* w)
 {
-	string data = serialize((World*) w);
+	string data = ((World*)w)->serialize(true);
 
 	timepoint start = chrono::system_clock::now();
-	deserialize(data);
+	World::initWorld(data);
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);
@@ -200,10 +200,11 @@ double globalDeserialization(void* w)
 double thymioDeserialization(void* t)
 {
 	ostringstream* output = new ostringstream();
-	serializeThymio((Thymio2*) t, output);
-
+	((Thymio2*) t)->serialize(output, true);
+	Thymio2* t1 = new Thymio2();
+	
 	timepoint start = chrono::system_clock::now();
-	deserializeThymio(output->str());
+	t1->deserialize(output->str(), false);
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);
@@ -212,10 +213,12 @@ double thymioDeserialization(void* t)
 double colorDeserialization(void* c)
 {
 	ostringstream* output = new ostringstream();
-	serializeColor(*((Color*)c) , output);
+	((Color*)c)->serialize(output);
 
 	timepoint start = chrono::system_clock::now();
-	deserializeColor(output->str());
+	vector<string> s = split(output->str(), TYPE_SEPARATOR);
+	int pos = 0;
+	Color(s, &pos); (output->str());
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);

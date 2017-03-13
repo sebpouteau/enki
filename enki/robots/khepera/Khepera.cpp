@@ -69,5 +69,19 @@ namespace Enki
 		
 		setCylindric(2.6, 5, 80);
 	}
+	
+	void Khepera::serialize(std::ostringstream* oss, const bool first) const
+	{
+		*oss << static_cast<int>(Factory::TypeObject::KHEPERA) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		Robot::serialize(oss, first);
+		*oss << OBJECT_SEPARATOR;
+	}
+
+	void Khepera::deserialize(const std::string& strKhepera, const bool first)
+	{
+		// Ignorate 2 first argmuments
+		int position = 2;
+		Robot::deserializeRobot(strKhepera, &position);
+	}
 }
 

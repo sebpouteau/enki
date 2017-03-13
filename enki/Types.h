@@ -39,6 +39,7 @@
 #include <string>
 #include <cassert>
 #include <stdint.h> // C99 in waiting for widespread C++11 support
+#include "Serialize.h"
 
 /*!	\file Types.h
 	\brief Basic useful types
@@ -65,7 +66,23 @@ namespace Enki
 			components[2] = b;
 			components[3] = a;
 		}
-		
+        
+		Color(std::vector<std::string> s, int* pos)
+		{
+			components[0] = stod(s[*pos]); *pos = *pos + 1;
+			components[1] = stod(s[*pos]); *pos = *pos + 1;
+			components[2] = stod(s[*pos]); *pos = *pos + 1;
+			components[3] = stod(s[*pos]); *pos = *pos + 1;
+		}
+        
+		inline void serialize(std::ostringstream* oss) const
+		{
+			*oss << components[0] << TYPE_SEPARATOR
+			<< components[1] << TYPE_SEPARATOR
+			<< components[2] << TYPE_SEPARATOR
+			<< components[3] << TYPE_SEPARATOR;
+		}
+        
 		//! access component i
 		const double& operator[](size_t i) const { assert(i < 4); return components[i]; }
 		//! access component i
