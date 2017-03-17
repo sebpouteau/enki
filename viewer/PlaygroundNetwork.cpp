@@ -68,8 +68,10 @@ int main(int argc, char* argv[])
 			thread threadClient([client]() { client->run(); });
 			threadClient.detach();
 
-			sleep(1); // Wait client thread initialization
-
+			//sleep(1); // Wait client thread initialization
+            while(client->getWorld() == NULL){
+                sleep(1);
+            }
 			ViewerWidget viewer(client->getWorld(), 0);
 			viewer.show();
 			app.exec();

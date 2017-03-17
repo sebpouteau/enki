@@ -43,9 +43,9 @@ const char TYPE_SEPARATOR = ';';
 namespace Enki
 {
     //! Return a serialization of Point
-    void serializePoint(const Point &pos, std::ostringstream* oss);
+    void serializePoint(const Point &pos, std::unique_ptr<std::ostringstream> oss);
     //! Return a vector contains substring Resulting from the separation of the string by s separator
-    std::vector<std::string> split(const std::string& str, const char& separator);
+    std::vector<std::string>& split(const std::string& str, const char separator);
 }
 
 #endif // SERIALIZE_H

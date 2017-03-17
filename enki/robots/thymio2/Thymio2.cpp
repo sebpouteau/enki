@@ -164,7 +164,7 @@ namespace Enki
 			return ledColor[ledIndex];
 	}
     
-	void Thymio2::serialize(ostringstream* oss, const bool first) const
+	void Thymio2::serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const
 	{
 		oss->precision(PRECISION);
 		oss->setf(std::ios::fixed);
@@ -172,12 +172,12 @@ namespace Enki
 		*oss << static_cast<int>(Factory::TypeObject::THYMIO2) << TYPE_SEPARATOR
 		<< getId() << TYPE_SEPARATOR;
 
-		serializeRobot(oss);
+		serializeRobot(move(oss));
 
 		*oss << Thymio2::LED_COUNT << TYPE_SEPARATOR;
 		for (int i = 0; i < Thymio2::LED_COUNT; ++i)
 		{
-			getColorLed((Thymio2::LedIndex)i).serialize(oss);
+			getColorLed((Thymio2::LedIndex)i).serialize(move(oss));
 		}
 
 		*oss << OBJECT_SEPARATOR;

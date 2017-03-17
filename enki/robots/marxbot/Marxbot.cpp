@@ -74,9 +74,9 @@ namespace Enki
 		return marxbotVirtualBumperResponseFunction(sqrt(rotatingDistanceSensor.zbuffer[(physicalNumber * 180) / 24]) - getRadius());
 	}
 	
-	void Marxbot::serialize(std::ostringstream* oss, const bool first) const{
+	void Marxbot::serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const{
 		*oss << static_cast<int>(Factory::TypeObject::MARXBOT) << TYPE_SEPARATOR<< getId() << TYPE_SEPARATOR;
-		Robot::serialize(oss, first);
+		Robot::serialize(move(oss), first);
 		*oss << OBJECT_SEPARATOR;
 	}
 

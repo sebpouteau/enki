@@ -166,11 +166,11 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			World* w = randomWorld();
 			Thymio2* t = randomThymio(w);
 
-			ostringstream* outputStream = new ostringstream();
-			t->serialize( outputStream, true);
+			std::unique_ptr<std::ostringstream> outputStream(new ostringstream());
+			t->serialize( move(outputStream), true);
 
-			ostringstream* outputStream2 = new ostringstream();
-			t->serialize(outputStream2, true);
+			std::unique_ptr<std::ostringstream> outputStream2(new ostringstream());
+			t->serialize(move(outputStream2), true);
 
 			REQUIRE( outputStream->str() == outputStream2->str() );
 		}
@@ -181,11 +181,11 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 		{
 			Color c = randomColor();
 
-			ostringstream* outputStream = new ostringstream();
-			c.serialize(outputStream);
+			std::unique_ptr<std::ostringstream> outputStream (new ostringstream());
+			c.serialize(move(outputStream));
 
-			ostringstream* outputStream2 = new ostringstream();
-			c.serialize(outputStream2);
+			std::unique_ptr<std::ostringstream> outputStream2 (new ostringstream());
+			c.serialize(move(outputStream2));
 
 			REQUIRE( outputStream->str() == outputStream2->str() );
 		}
@@ -230,8 +230,8 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			World* w = randomWorld();
 			Thymio2* t = randomThymio(w);
 
-			ostringstream* outputStream = new ostringstream();
-			t->serialize(outputStream, true);
+			std::unique_ptr<std::ostringstream> outputStream(new ostringstream());
+			t->serialize(move(outputStream), true);
 
 			Thymio2* t1 = new Thymio2();
 			t1->deserialize(outputStream->str(), true);
@@ -248,8 +248,8 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		{
 			Color c = randomColor();
 
-			ostringstream* outputStream = new ostringstream();
-			c.serialize(outputStream);
+			std::unique_ptr<std::ostringstream> outputStream(new ostringstream());
+			c.serialize(move(outputStream));
 
 			vector<string> tabC = split(outputStream->str(), TYPE_SEPARATOR);
 			int pos = 0;

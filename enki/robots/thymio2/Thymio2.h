@@ -104,7 +104,7 @@ namespace Enki
 		Color getColorLed(LedIndex ledIndex) const;
         
 		//! Return a serialization of Thymio (for serialize init first = true, else first = false)
-		virtual void serialize(std::ostringstream* oss, const bool first) const;
+		virtual void serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const;
 		//! Deserialize a Thymio from a string (for deserialize init first = true, else first = false)
 		virtual void deserialize(const std::string& strUpdate, const bool first);
 	protected:

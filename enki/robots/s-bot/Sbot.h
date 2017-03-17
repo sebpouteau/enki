@@ -113,7 +113,7 @@ namespace Enki
 		~Sbot() {}
         
 		//! Return a serialization of Sbot (for serialize init first = true, else first = false)
-		virtual void serialize(std::ostringstream* oss, const bool first) const;
+		virtual void serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const;
 		void deserialize(const std::string& strEpuck, const bool first);
 
 	};

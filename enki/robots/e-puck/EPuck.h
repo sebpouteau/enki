@@ -120,7 +120,7 @@ namespace Enki
 		
 		//! Set ring color (true = red, false = black) 
 		void setLedRing(bool status);
-		void serialize(std::ostringstream* oss, const bool first) const;
+		void serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const;
 		void deserialize(const std::string& strEpuck, const bool first);
 	};
 }

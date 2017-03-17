@@ -140,10 +140,10 @@ namespace Enki
 		setColor(status ? Color::red : Color(0, 0.7, 0));
 	}
     
-	void EPuck::serialize(std::ostringstream* oss, const bool first) const
+	void EPuck::serialize(std::unique_ptr<std::ostringstream> oss, const bool first) const
 	{
 		*oss << static_cast<int>(Factory::TypeObject::EPUCK) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
-		Robot::serialize(oss, first);
+		Robot::serialize(move(oss), first);
 		*oss << OBJECT_SEPARATOR;
 	}
 

@@ -75,7 +75,7 @@ namespace Enki
 			components[3] = stod(s[*pos]); *pos = *pos + 1;
 		}
         
-		inline void serialize(std::ostringstream* oss) const
+		inline void serialize(std::unique_ptr<std::ostringstream> oss) const
 		{
 			*oss << components[0] << TYPE_SEPARATOR
 			<< components[1] << TYPE_SEPARATOR

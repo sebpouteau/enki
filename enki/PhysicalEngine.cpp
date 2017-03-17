@@ -629,7 +629,7 @@ namespace Enki
 	}
 
 	
-	void PhysicalObject::serialize(std::ostringstream* oss, bool first) const
+	void PhysicalObject::serialize(std::unique_ptr<std::ostringstream> oss, bool first) const
 	{
 		oss->precision(PRECISION);
 		oss->setf(std::ios::fixed);
@@ -637,9 +637,9 @@ namespace Enki
 		*oss << static_cast<int>(Factory::TypeObject::PHYS_OBJ) << TYPE_SEPARATOR
 		<< id << TYPE_SEPARATOR;
 		
-		serializePoint(pos, oss);
+		serializePoint(pos, move(oss));
 		*oss << angle << TYPE_SEPARATOR;
-		getColor().serialize(oss);
+		getColor().serialize(move(oss));
 		
 		if (first)
 		{
@@ -649,11 +649,11 @@ namespace Enki
 				*oss << getRadius() << TYPE_SEPARATOR
 				<< getHeight() << TYPE_SEPARATOR
 				<< getMass() << TYPE_SEPARATOR;
-				getColor().serialize(oss);
+				getColor().serialize(move(oss));
 			}
 			else
 			{
-				hull.serialize(oss);
+				hull.serialize(move(oss));
 				*oss << getMass() << TYPE_SEPARATOR;
 			}
 		}
@@ -663,7 +663,7 @@ namespace Enki
  
 	void PhysicalObject::deserialize(const std::string& strPhysObj, bool first)
 	{
-		std::vector<std::string> obj = split(strPhysObj, TYPE_SEPARATOR);
+		std::vector<std::string>& obj = split(strPhysObj, TYPE_SEPARATOR);
 		int position = 2;
 		
 		pos.x = stod(obj[position++]);
@@ -697,9 +697,10 @@ namespace Enki
 				setCustomHull(hull, mass);
 			}
 		}
+		delete &obj;
 	}
 	
-	void PhysicalObject::Hull::serialize(std::ostringstream* oss) const
+	void PhysicalObject::Hull::serialize(std::unique_ptr<std::ostringstream> oss) const
 	{
 		*oss << size() << TYPE_SEPARATOR;
 		
@@ -709,7 +710,7 @@ namespace Enki
 			*oss << shape.size() << TYPE_SEPARATOR;
 			for (size_t j = 0; j < shape.size(); ++j)
 			{
-				serializePoint(shape[j], oss);
+				serializePoint(shape[j], move(oss));
 			}
 			
 			*oss << poly.getHeight() << TYPE_SEPARATOR;
@@ -725,7 +726,7 @@ namespace Enki
 					*oss << texture.size() << TYPE_SEPARATOR;
 					for (size_t i = 0; i < texture.size(); ++i)
 					{
-						texture[i].serialize(oss);
+						texture[i].serialize(move(oss));
 					}
 				}
 			}
@@ -736,7 +737,7 @@ namespace Enki
 	{
 		PhysicalObject::Hull hull= PhysicalObject::Hull();
 		
-		std::vector<std::string> obj = split(strHull, TYPE_SEPARATOR);
+		std::vector<std::string>& obj = split(strHull, TYPE_SEPARATOR);
 		
 		int nb_hull = stod(obj[*pos]); *pos += 1;
 		for (int i = 0; i < nb_hull; ++i)
@@ -774,6 +775,7 @@ namespace Enki
 				hull += PhysicalObject::Hull(PhysicalObject::Part(shape, height));
 			}
 		}
+		delete &obj;
 		return hull;
 	}
 	
@@ -851,23 +853,25 @@ namespace Enki
 		}
 	}
 	
-	void Robot::serializeRobot(std::ostringstream* oss) const
+	void Robot::serializeRobot(std::unique_ptr<std::ostringstream> oss) const
 	{
 		oss->precision(PRECISION);
 		oss->setf(std::ios::fixed);
-		serializePoint(pos, oss);
+		serializePoint(pos, move(oss));
 		*oss << angle << TYPE_SEPARATOR;
 	}
 	
 	void Robot::deserializeRobot(const std::string& str, int *position)
 	{
-		std::vector<std::string> tabObj = split(str, TYPE_SEPARATOR);
+		std::vector<std::string>& tabObj = split(str, TYPE_SEPARATOR);
 		// ignore Type and Position
 		
 		pos.x = stod(tabObj[*position]); *position += 1;
 		pos.y = stod(tabObj[*position]); *position += 1;
 		
 		angle = stod(tabObj[*position]); *position += 1;
+		
+		delete &tabObj;
 	}
 	
 	
@@ -1447,12 +1451,12 @@ namespace Enki
 		return bluetoothBase;
 	}
 	
-	void World::GroundTexture::serialize(std::ostringstream* oss) const
+	void World::GroundTexture::serialize(std::unique_ptr<std::ostringstream> oss) const
 	{
-		*oss << width << TYPE_SEPARATOR
+		oss << width << TYPE_SEPARATOR
 		<< height << TYPE_SEPARATOR;
 		
-		*oss << data.size() << TYPE_SEPARATOR;
+		oss << data.size() << TYPE_SEPARATOR;
 		
 		for (int i = 0; i < data.size(); ++i)
 		{
@@ -1464,7 +1468,7 @@ namespace Enki
 	World::GroundTexture World::GroundTexture::deserialize(const std::string& strGroundTexture , int indice)
 	{
 		
-		std::vector<std::string> obj = split( strGroundTexture, TYPE_SEPARATOR);
+		std::vector<std::string>& obj = split( strGroundTexture, TYPE_SEPARATOR);
 		double height = stod(obj[indice]);
 		
 		double width = stod(obj[indice+1]);
@@ -1476,16 +1480,18 @@ namespace Enki
 		}
 		uint32_t* bits = (uint32_t *)data.data();
 		
+		delete &obj;
+		
 		return World::GroundTexture(width, height, bits);
 	}
  
 	World* World::initWorld(const std::string& strSerialize)
 	{
 		
-		std::vector<std::string> obj = split(strSerialize, OBJECT_SEPARATOR);
+		std::vector<std::string>& obj = split(strSerialize, OBJECT_SEPARATOR);
 		int numObj = 0;
 		
-		std::vector<std::string> tabWorld = split(obj[0], TYPE_SEPARATOR);
+		std::vector<std::string>& tabWorld = split(obj[0], TYPE_SEPARATOR);
 		
 		int pos = 0;
 		int wallsType = stod(tabWorld[pos++]);
@@ -1519,13 +1525,15 @@ namespace Enki
 				world = new World();
 				break;
 		}
+		delete &tabWorld;
+		delete &obj;
 		world->deserialize(strSerialize, true);
 		return world;
 	}
  
 	void World::deserialize(const std::string& strSerialize, bool first)
 	{
-		std::vector<std::string> tabObj = split(strSerialize, OBJECT_SEPARATOR);
+		std::vector<std::string>& tabObj = split(strSerialize, OBJECT_SEPARATOR);
 		
 		int position = 0;
 		if (first)
@@ -1533,7 +1541,7 @@ namespace Enki
 		
 		for (int i = position; i < tabObj.size(); ++i)
 		{
-			std::vector<std::string> tmpObj = split(tabObj[i], TYPE_SEPARATOR);
+			std::vector<std::string>& tmpObj = split(tabObj[i], TYPE_SEPARATOR);
 			int pos = 1;
 			
 			int id = stod(tmpObj[pos++]);
@@ -1545,14 +1553,15 @@ namespace Enki
 				o->id = id;
 				addObject(o);
 			}
-			
+			delete &tmpObj;
 			updateObject(tabObj[i], first);
 		}
+		delete &tabObj;
 	}
 
 	std::string World::serialize(bool first)
     {
-		std::ostringstream* oss = new std::ostringstream();
+		std::unique_ptr<std::ostringstream> oss ( new std::ostringstream());
 		
 		oss->precision(PRECISION);
 		oss->setf(std::ios::fixed);
@@ -1575,22 +1584,23 @@ namespace Enki
 			}
 			
 			
-			color.serialize(oss);
-			groundTexture.serialize(oss);
+			color.serialize(move(oss));
+			groundTexture.serialize(move(oss));
 			
 			*oss << OBJECT_SEPARATOR;
 		}
 		
 		for (auto& object : objects)
 		{
-			object->serialize(oss, first);
+			object->serialize(move(oss), first);
 		}
-		return oss->str();
+		std::string str = oss->str();
+		return str;
 	}
  
 	void World::updateObject(const std::string str, bool first)
     {
-		std::vector<std::string> tabObj = split(str, TYPE_SEPARATOR);
+		std::vector<std::string>& tabObj = split(str, TYPE_SEPARATOR);
 		int pos = 0;
 		
 		int type_object = stod(tabObj[pos++]);
@@ -1604,6 +1614,7 @@ namespace Enki
 				break;
 			}
 		}
+		delete &tabObj;
 	}
 }
 
