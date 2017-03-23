@@ -65,7 +65,7 @@ namespace Enki
 
 	void Server::initWorld(Stream* stream) const
 	{
-		string init = serialize(m_world);
+		string init = serialize(m_world, true);
 		init += "\n";
 		sendString(stream, init);
 	}
@@ -124,12 +124,12 @@ namespace Enki
 			// Init World
 			if (init)
 			{
-				m_world = deserialize<World*>(line);
+				m_world = initWorld(line);
 				init = false;
 			}
 			else
 			{
-				deserializeUdpate(m_world, line);
+				deserialize(m_world, line, Separator::a, false);
 			}
 		}
 	}

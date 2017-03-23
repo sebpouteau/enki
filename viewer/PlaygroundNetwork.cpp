@@ -114,6 +114,35 @@ int main(int argc, char* argv[])
 			thymio->rightSpeed = 4;
 
 			world->addObject(thymio);
+			// cross shape
+			{
+				PhysicalObject* o = new PhysicalObject;
+				PhysicalObject::Hull hull;
+				hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(5,1) << Point(-5,1) << Point(-5,-1) << Point(5,-1), 2));
+				hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(1,5) << Point(-1,5) << Point(-1,-5) << Point(1,-5), 4));
+				o->setCustomHull(hull, 60);
+				o->setColor(Color(0.2, 0.4, 0.6));
+				o->collisionElasticity = 0.2;
+				o->pos = Point(UniformRand(20, 100)(), UniformRand(20, 100)());
+				world->addObject(o);
+			}
+
+			EPuck* e = new EPuck();
+			e->pos = Point(20,20);
+
+			Marxbot* m = new Marxbot();
+			m->pos = Point(30,30);
+
+			Sbot* s = new Sbot();
+			s->pos = Point(0,10);
+
+			Khepera* k = new Khepera();
+			k->pos = Point(30,0);
+
+			world->addObject(e);
+			world->addObject(k);
+			world->addObject(m);
+			world->addObject(s);
 
 			Server* server = new Server(world);
 			thread threadServer([server]() { server->run(); });

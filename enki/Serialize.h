@@ -20,7 +20,7 @@
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
-#include <enki/robots/thymio2/Thymio2.h>
+#include <enki/Factory.h>
 
 /*!	\file Serialize.h
 	\brief The serialization & deserialization
@@ -35,8 +35,6 @@
 	with an arbitrary limit of Separator::size levels.
 */
 
-enum ROBOT_TYPES { WORLD, THYMIO2, PHYSICAL_OBJECT };
-
 namespace Enki
 {
 	// Number of digits after the decimal point for double.
@@ -50,7 +48,7 @@ namespace Enki
 		d = '#',
 		e = '~',
 		f = '|',
-		g = '-',
+		g = '?',
 		h = '_',
 		i = '^',
 		j = '@',
@@ -63,25 +61,39 @@ namespace Enki
 	Separator next(const Separator sep);
 
 	//! Return the string serialization of world
-	std::string serialize(World *world);
+	std::string serialize(World *world, bool first = false);
 	//! Update the world with the string serialization.
-	void deserializeUdpate(World* world, const std::string& str);
+	void deserializeUdpate(World* world, const std::string& str, bool first = false);
 
 	//! Serialize the world and add the string serialization to the os
 	void serialize(World* world, std::ostream& os,
-				   Separator sep = Separator::a);
+				   Separator sep = Separator::a, bool first = false);
 	//! Serialize the texture and add the string serialization to the os
 	void serialize(const World::GroundTexture& texture, std::ostream& os,
-				   Separator sep = Separator::a);
+				   Separator sep = Separator::a, bool first = false);
 	//! Serialize objects and add the string serialization to the os
 	void serialize(std::set<PhysicalObject*> objects, std::ostream& os,
-				   Separator sep = Separator::a);
+				   Separator sep = Separator::a, bool  first = false);
+	//! Serialize the robot and add the the string serialization to the os
+	void serialize(Robot* r, std::ostream& os, Separator sep = Separator::a);
 	//! Serialize the Thymio and add the string serialization to the os
 	void serialize(Thymio2* thymio, std::ostream& os,
-				   Separator sep = Separator::a);
+				   Separator sep = Separator::a, bool first = false);
+	//! Serialize the Epuck and add the string serialization to the os
+	void serialize(EPuck* thymio, std::ostream& os,
+				   Separator sep = Separator::a, bool first = false);
+	//! Serialize the Maxrbot and add the string serialization to the os
+	void serialize(Marxbot* thymio, std::ostream& os,
+				   Separator sep = Separator::a, bool first = false);
+	//! Serialize the Sbot and add the string serialization to the os
+	void serialize(Sbot* thymio, std::ostream& os,
+				   Separator sep = Separator::a, bool first = false);
+	//! Serialize the Khepra and add the string serialization to the os
+	void serialize(Khepera* thymio, std::ostream& os,
+				   Separator sep = Separator::a, bool first = false);
 	//! Serialize the PhysicalObject and add the string serialization to the os
 	void serialize(PhysicalObject* po, std::ostream& os,
-				   Separator sep = Separator::a);
+				   Separator sep = Separator::a, bool first = false);
 	//! Serialize the Color and add the string serialization to the os
 	void serialize(const Color& color, std::ostream& os,
 				   Separator sep = Separator::a);
@@ -106,15 +118,26 @@ namespace Enki
 	T deserialize(const std::string& str, Separator sep = Separator::a);
 
 	//! Return a World without objects with the string serialization.
-	template<>
-	World* deserialize(const std::string& str, Separator sep);
+	World* initWorld(const std::string& str);
+	//! Deserialize information of world create objects if first == true, update objects if first == false
+	void deserialize(World* world, const std::string& str, Separator sep, bool first);
 	//! Return a GroundTexture with the string serialization.
 	template<>
 	World::GroundTexture deserialize(const std::string& str, Separator sep);
-	//! Return a Thymio with the string serialization.
-	void deserialize(Thymio2* thymio, const std::string& str, Separator sep = Separator::b);
-	//! Return a PhysicalObject with the string serialization.
-	void deserialize(PhysicalObject* po, const std::string& str, Separator sep = Separator::b);
+	//! Deserialize the Robot R from string STR with separator SEP.
+	void deserialize(const std::string& str, Robot* r, Separator sep);
+	//! Update a Thymio with the string serialization.
+	void deserialize(Thymio2* thymio, const std::string& str, Separator sep = Separator::b, bool first = false);
+	//! Update a marxbot with the string serialization.
+	void deserialize(Marxbot* marxbot, const std::string& str, Separator sep = Separator::b, bool first = false);
+	//! Update a EPuck with the string serialization.
+	void deserialize(EPuck* epuck, const std::string& str, Separator sep = Separator::b, bool first = false);
+	//! Update a Khepera with the string serialization.
+	void deserialize(Khepera* khepera, const std::string& str, Separator sep = Separator::b, bool first = false);
+	//! Update a Sbot with the string serialization.
+	void deserialize(Sbot* sbot, const std::string& str, Separator sep = Separator::b, bool first = false);
+	//! Update a PhysicalObject with the string serialization.
+	void deserialize(PhysicalObject* po, const std::string& str, Separator sep = Separator::b, bool fisrt = false);
 	//! Return a Color with the string serialization.
 	template<>
 	Color deserialize(const std::string& str, Separator sep);

@@ -225,13 +225,13 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 	SECTION( "[D] Empty World" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
-			string str = serialize(w);
+			World* w = gen->getWorld();
+			string str = serialize(w, true);
 
-			World* w1 = deserialize<World*>(str);
+			World* w1 = initWorld(str);
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserialize<World*>(str);
+			World* w2 = initWorld(str);
 			REQUIRE( equalsWorld(w1, w2) );
 			delete w1;
 			delete w2;
@@ -247,11 +247,11 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			serialize(t, outputStream, Separator::b);
 
 			Thymio2* t1 = new Thymio2();
-			deserialize(t1, outputStream.str());
+			deserialize(t1, outputStream.str(), Separator::b, true);
 			REQUIRE( equalsThymio(t, t1) );
 
 			Thymio2* t2 = new Thymio2();
-			deserialize(t2, outputStream.str());
+			deserialize(t2, outputStream.str(), Separator::b, true);
 			REQUIRE( equalsThymio(t1, t2) );
 
 			delete t1;
@@ -282,12 +282,12 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			gen->add(Randomizer::THYMIO2_, 1);
 			World* w = gen->getWorld();
 
-			std::string outputString = serialize(w);
-			World* w1 = deserialize<World*>(outputString);
+			std::string outputString = serialize(w, true);
+			World* w1 = initWorld(outputString);
 
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserialize<World*>(outputString);
+			World* w2 = initWorld(outputString);
 			REQUIRE( equalsWorld(w1, w2) );
 
 			gen->resetWorld();

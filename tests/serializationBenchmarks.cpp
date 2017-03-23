@@ -189,10 +189,10 @@ stats deserializeIt(double (*func) (void*), void* param, int iteration)
 
 double globalDeserialization(void* w)
 {
-	string data = serialize((World*) w);
+	string data = serialize((World*) w, true);
 
 	timepoint start = chrono::system_clock::now();
-	deserialize<World*>(data);
+	initWorld(data);
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);
@@ -205,7 +205,7 @@ double thymioDeserialization(void* t)
 
 	Thymio2* th = new Thymio2();
 	timepoint start = chrono::system_clock::now();
-	deserialize(th, output.str());
+	deserialize(th, output.str(), Separator::b, true);
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);

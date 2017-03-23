@@ -375,7 +375,7 @@ namespace Enki
 
 	public:
 		int getId() const { return id; }
-		int setId(int id) { this->id = id; }
+		void setId(int id) { this->id = id; }
 
 	private:
 		// ID is used when sharing a world over the network where it should be
