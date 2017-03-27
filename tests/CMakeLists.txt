@@ -41,7 +41,10 @@ add_test(serialize serialization "Serialization")
 add_test(deserialize serialization "Deserialization")
 
 add_executable(serializationBenchmarks serializationBenchmarks.cpp)
-target_link_libraries(serializationBenchmarks worldgenerator enki)
+target_link_libraries(serializationBenchmarks catch enki)
+
+add_test(BenchmarksSize serializationBenchmarks "BenchMarks Serialization Size")
+add_test(BenchmarksSerializationTime serializationBenchmarks "BenchMarks Time Serialization")
 
 add_executable(network network.cpp)
 target_link_libraries(network enki ${dashel_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} catch)
