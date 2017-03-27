@@ -72,11 +72,12 @@ namespace Enki
 
 	void Server::connectionCreated(Stream *stream)
 	{
+		dataStreams.erase(stream);
 		cerr << "+ Incoming connection from " << stream->getTargetName() << endl;
 
 		string identification = readLine(stream);
 		initWorld(stream);
-
+		dataStreams.insert(stream);
 		cerr << "+ User is connected." << endl;
 	}
 
