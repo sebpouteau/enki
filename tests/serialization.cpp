@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <enki/worldgenerator/WorldGenerator.h>
 
 const double EPSILON = pow(10, -2);
-const int ITERATION_NUMBER = 1000;
+const int ITERATION_NUMBER = 100;
 
 using namespace Enki;
 using namespace std;

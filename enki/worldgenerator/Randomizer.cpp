@@ -97,7 +97,7 @@ World* Randomizer::randWorld()
 
 		if (groundTexture)
 		{
-			World::GroundTexture gt = randGroundTexture(width, height);
+			World::GroundTexture gt = randGroundTexture(width/4, height/4);
 			return new World(width, height, color, gt);
 		}
 		return new World(width, height, color);
@@ -107,7 +107,7 @@ World* Randomizer::randWorld()
 		int radius = randFloat(MIN_RADIUS, MAX_RADIUS);
 		if (groundTexture)
 		{
-			World::GroundTexture gt = randGroundTexture(radius, radius);
+			World::GroundTexture gt = randGroundTexture(radius/4, radius/4);
 			return new World(radius, color, gt);
 		}
 		return new World(radius, color);
@@ -396,7 +396,7 @@ World::GroundTexture Randomizer::randGroundTexture(float width, float height)
 	std::vector<uint32_t> data;
 	for (int i = 0; i < width * height; i++)
 	{
-		data.push_back(randInt(1, 255));
+		data.push_back(Color::toARGB(randColor()));
 	}
 
 	return World::GroundTexture(width, height, data.data());

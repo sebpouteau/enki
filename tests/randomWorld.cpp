@@ -32,7 +32,7 @@ using namespace Enki;
 #define DEBUG 0
 
 // Used to ensure the robustness of the tested code.
-const int ITERATION_NUMBER = 1000;
+const int ITERATION_NUMBER = 100;
 
 TEST_CASE( "UNIT Testing", "[Enki::RandomWorld.h]" ) {
 	Randomizer* globalRandomizer = new Randomizer();
