@@ -75,4 +75,13 @@ if (QT4_FOUND AND OPENGL_FOUND)
 	)
 	install(TARGETS enkiviewer ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
                                    LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+
+	set(CMAKE_AUTOMOC TRUE)
+
+	# Linking
+	add_executable(launcher launcher.cpp )
+	target_link_libraries(launcher  enkiviewer worldgenerator
+                                   enki ${QT_LIBRARIES} ${OPENGL_LIBRARIES}
+                                   ${dashel_LIBRARIES}
+                                   ${CMAKE_THREAD_LIBS_INIT})
 endif (QT4_FOUND AND OPENGL_FOUND)

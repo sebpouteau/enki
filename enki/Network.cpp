@@ -98,6 +98,7 @@ namespace Enki
 		inputStream = connect("stdin:");
 		remoteStream = connect(remoteTarget);
 		sendString(remoteStream, "I want to connect!\n");
+		m_world = NULL;
 	}
 
 	void Client::connectionCreated(Stream *stream)

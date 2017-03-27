@@ -208,6 +208,8 @@ Thymio2* Randomizer::randThymio()
 
 	thymio->pos = randPoint();
 	thymio->angle = randFloat(0.0, 2*M_PI);
+	thymio->leftSpeed = randFloat(0.0, 10.0);
+	thymio->rightSpeed = randFloat(0.0, 10.0);
 
 	return thymio;
 }
@@ -217,6 +219,8 @@ EPuck* Randomizer::randEPuck()
 	EPuck* epuck = new EPuck();
 	epuck->pos = randPoint();
 	epuck->angle = randFloat(0.0, 2*M_PI);
+	epuck->leftSpeed = randFloat(0.0, 10.0);
+	epuck->rightSpeed = randFloat(0.0, 10.0);
 	return epuck;
 }
 
@@ -225,6 +229,8 @@ Khepera* Randomizer::randKhepera()
 	Khepera* khepera = new Khepera();
 	khepera->pos = randPoint();
 	khepera->angle = randFloat(0.0, 2*M_PI);
+	khepera->leftSpeed = randFloat(0.0, 10.0);
+	khepera->rightSpeed = randFloat(0.0, 10.0);
 	return khepera;
 }
 
@@ -234,6 +240,8 @@ Sbot* Randomizer::randSbot()
 	sbot->setColor(randColor());
 	sbot->pos = randPoint();
 	sbot->angle = randFloat(0.0, 2*M_PI);
+	sbot->leftSpeed = randFloat(0.0, 10.0);
+	sbot->rightSpeed = randFloat(0.0, 10.0);
 	return sbot;
 }
 
@@ -243,6 +251,8 @@ Marxbot* Randomizer::randMarxbot()
 	marxbot->setColor(randColor());
 	marxbot->pos = randPoint();
 	marxbot->angle = randFloat(0.0, 2*M_PI);
+	marxbot->leftSpeed = randFloat(0.0, 10.0);
+	marxbot->rightSpeed = randFloat(0.0, 10.0);
 	return marxbot;
 }
 
