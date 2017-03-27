@@ -30,27 +30,28 @@ const int ITERATION_NUMBER = 100;
 using namespace Enki;
 using namespace std;
 
-static void printWorld(World* w)
+static void printWorld(World* w, ostream& os)
 {
-	cerr << "- Walls type : " << w->wallsType << endl;
 	if (w->wallsType == World::WALLS_CIRCULAR)
 	{
-		cerr << "- World size : " << w->r << endl;
+		os << "- Walls type : circular" << endl;
+		os << "- World size : " << w->r << endl;
 	}
 	else
 	{
-		cerr << "- World size : " << w->w << "x" << w->h << endl;
+		os << "- Walls type : square" << endl;
+		os << "- World size : " << w->w << "x" << w->h << endl;
 	}
-	cerr << "- Number of objects : " << w->objects.size() << endl;
+	os << "- Number of objects : " << w->objects.size() << endl;
 	for (PhysicalObject* o : w->objects)
 	{
-		cerr << "--- Type : " << typeid(*o).name() << endl;
-		cerr << "--- PhysicalObject : " << o->pos.x << ";" << o->pos.y << endl;
-		cerr << "--- Color : " << endl
-		<< "----- " << o->getColor().r() << endl
-		<< "----- " << o->getColor().g() << endl
-		<< "----- " << o->getColor().b() << endl
-		<< "----- " << o->getColor().a() << endl;
+		os << "--- Type : " << typeid(*o).name() << endl;
+		os << "--- PhysicalObject : " << o->pos.x << ";" << o->pos.y << endl;
+		os << "--- Color : " << endl
+		   << "----- " << o->getColor().r() << endl
+		   << "----- " << o->getColor().g() << endl
+		   << "----- " << o->getColor().b() << endl
+		   << "----- " << o->getColor().a() << endl;
 	}
 }
 
@@ -156,10 +157,10 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			World* w = gen->getWorld();
 
 			ostringstream outputStream;
-			serializeWorld(w, outputStream);
+			serialize(w, outputStream);
 
 			ostringstream outputStream2;
-			serializeWorld(w, outputStream2);
+			serialize(w, outputStream2);
 
 			REQUIRE( outputStream.str() == outputStream2.str() );
 		}
@@ -172,10 +173,10 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			Thymio2* t = gen->getRandomizer()->randThymio();
 
 			ostringstream outputStream;
-			serializeThymio(t, outputStream);
+			serialize(t, outputStream);
 
 			ostringstream outputStream2;
-			serializeThymio(t, outputStream2);
+			serialize(t, outputStream2);
 
 			delete t;
 
@@ -190,10 +191,10 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			Color c = gen->getRandomizer()->randColor();
 
 			ostringstream outputStream;
-			serializeColor(c, outputStream);
+			serialize(c, outputStream);
 
 			ostringstream outputStream2;
-			serializeColor(c, outputStream2);
+			serialize(c, outputStream2);
 
 			REQUIRE( outputStream.str() == outputStream2.str() );
 		}
@@ -224,16 +225,13 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 	SECTION( "[D] Empty World" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = gen->getWorld();
+			World* w = randomWorld();
+			string str = serialize(w);
 
-			ostringstream outputStream;
-			serializeWorld(w, outputStream);
-
-			World* w1 = deserializeWorld(outputStream.str());
+			World* w1 = deserialize<World*>(str);
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserializeWorld(outputStream.str());
-			// this assume that w == w2
+			World* w2 = deserialize<World*>(str);
 			REQUIRE( equalsWorld(w1, w2) );
 			delete w1;
 			delete w2;
@@ -246,12 +244,14 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			Thymio2* t = gen->getRandomizer()->randThymio();
 
 			ostringstream outputStream;
-			serializeThymio(t, outputStream);
+			serialize(t, outputStream, Separator::b);
 
-			Thymio2* t1 = deserializeThymio(outputStream.str());
+			Thymio2* t1 = new Thymio2();
+			deserialize(t1, outputStream.str());
 			REQUIRE( equalsThymio(t, t1) );
 
-			Thymio2* t2 = deserializeThymio(outputStream.str());
+			Thymio2* t2 = new Thymio2();
+			deserialize(t2, outputStream.str());
 			REQUIRE( equalsThymio(t1, t2) );
 
 			delete t1;
@@ -266,12 +266,12 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			Color c = gen->getRandomizer()->randColor();
 
 			ostringstream outputStream;
-			serializeColor(c, outputStream);
+			serialize(c, outputStream);
 
-			Color c1 = deserializeColor(outputStream.str());
+			Color c1 = deserialize<Color>(outputStream.str());
 			REQUIRE( equalsColor(c, c1) );
 
-			Color c2 = deserializeColor(outputStream.str());
+			Color c2 = deserialize<Color>(outputStream.str());
 			REQUIRE( equalsColor(c1, c2) );
 		}
 	}
@@ -283,11 +283,11 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			World* w = gen->getWorld();
 
 			std::string outputString = serialize(w);
-			World* w1 = deserialize(outputString);
+			World* w1 = deserialize<World*>(outputString);
 
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserialize(outputString);
+			World* w2 = deserialize<World*>(outputString);
 			REQUIRE( equalsWorld(w1, w2) );
 
 			gen->resetWorld();

@@ -158,7 +158,7 @@ double thymioSerialization(void* t)
 {
 	Thymio2* thymio = (Thymio2*) t;
 	ostringstream output;
-	serializeThymio(thymio, output);
+	serialize(thymio, output);
 
 	return output.str().size();
 }
@@ -167,7 +167,7 @@ double colorSerialization(void* c)
 {
 	Color* color = (Color*) c;
 	ostringstream output;
-	serializeColor(*color, output);
+	serialize(*color, output);
 
 	return output.str().size();
 }
@@ -192,7 +192,7 @@ double globalDeserialization(void* w)
 	string data = serialize((World*) w);
 
 	timepoint start = chrono::system_clock::now();
-	deserialize(data);
+	deserialize<World*>(data);
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);
@@ -201,10 +201,11 @@ double globalDeserialization(void* w)
 double thymioDeserialization(void* t)
 {
 	ostringstream output;
-	serializeThymio((Thymio2*) t, output);
+	serialize((Thymio2*) t, output, Separator::b);
 
+	Thymio2* th = new Thymio2();
 	timepoint start = chrono::system_clock::now();
-	deserializeThymio(output.str());
+	deserialize(th, output.str());
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);
@@ -213,10 +214,10 @@ double thymioDeserialization(void* t)
 double colorDeserialization(void* c)
 {
 	ostringstream output;
-	serializeColor(*((Color*)c), output);
+	serialize(*((Color*)c), output);
 
 	timepoint start = chrono::system_clock::now();
-	deserializeColor(output.str());
+	deserialize<Color>(output.str());
 	timepoint end = chrono::system_clock::now();
 
 	return msTime(start, end);

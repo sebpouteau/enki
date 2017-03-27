@@ -22,61 +22,117 @@
 
 #include <enki/robots/thymio2/Thymio2.h>
 
-/*! \file Serialize.h
-    \brief The serialization & deserialization
+/*!	\file Serialize.h
+	\brief The serialization & deserialization
 
-    For the serialization:
-      - complex objects ends with OBJECT_SEPARATOR = ':'
-        eg: World:Thymio:PhysicalObject:...:
-      - objects of a lower complexity ends with MEMBER_SEPARATOR = '&'
-        eg: Color&Point&...&
-      - basic types (int, float, double, etc.) ends with TYPE_SEPARATOR = ';'
-      eg: int;float;double;
+	For the serialization the data is organized in a tree where the separator is
+	used to indicate which level a node beyond.  This technique allows parsing
+	the strings recursively easily.  The current limitation is that there is a
+	limited deepness for the tree.
+
+	At first level we found the world characterics and the objects it contains.
+	At second level we find data members sub members and it continues like this
+	with an arbitrary limit of Separator::size levels.
 */
 
 enum ROBOT_TYPES { WORLD, THYMIO2, PHYSICAL_OBJECT };
 
-const char OBJECT_SEPARATOR = ':';
-const char MEMBER_SEPARATOR = '&';
-const char TYPE_SEPARATOR = ';';
-
 namespace Enki
 {
+	// Number of digits after the decimal point for double.
+	const int PRECISION = 2;
+
+	enum class Separator : char
+	{
+		a = ':',
+		b = ';',
+		c = '&',
+		d = '#',
+		e = '~',
+		f = '|',
+		g = '-',
+		h = '_',
+		i = '^',
+		j = '@',
+		size
+	};
+
+	//! Return the actual char associated with SEP.
+	inline char operator*(const Separator sep);
+	//! Return the next separator after SEP.
+	Separator next(const Separator sep);
+
 	//! Return the string serialization of world
 	std::string serialize(World *world);
-	//! Return a World with its objects with the string serialization.
-	World* deserialize(const std::string& strSerialization);
 	//! Update the world with the string serialization.
-	void deserializeUdpate(World * world, const std::string& strUpdate);
+	void deserializeUdpate(World* world, const std::string& str);
 
 	//! Serialize the world and add the string serialization to the os
-	void serializeWorld(World *world, std::ostream& os);
-	//! Serialize objects of the world and add the string serialization to the os
-	void serializeObjects(World *world, std::ostream& os);
+	void serialize(World* world, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize the texture and add the string serialization to the os
+	void serialize(const World::GroundTexture& texture, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize objects and add the string serialization to the os
+	void serialize(std::set<PhysicalObject*> objects, std::ostream& os,
+				   Separator sep = Separator::a);
 	//! Serialize the Thymio and add the string serialization to the os
-	void serializeThymio(Thymio2 *thymio, std::ostream& os);
+	void serialize(Thymio2* thymio, std::ostream& os,
+				   Separator sep = Separator::a);
 	//! Serialize the PhysicalObject and add the string serialization to the os
-	void serializePhysObj(PhysicalObject* po, std::ostream& os);
+	void serialize(PhysicalObject* po, std::ostream& os,
+				   Separator sep = Separator::a);
 	//! Serialize the Color and add the string serialization to the os
-	void serializeColor(const Color &color, std::ostream& os);
+	void serialize(const Color& color, std::ostream& os,
+				   Separator sep = Separator::a);
 	//! Serialize the Point and add the string serialization to the os
-	void serializePoint(const Point &pos, std::ostream& os);
+	void serialize(const Point& pos, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize the Point and add the string serialization to the os
+	void serialize(const PhysicalObject::Hull& hull, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize the Polygone and add the string serialization to the os
+	void serialize(const Polygone& poly, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize the textures and add the string serialization to the os
+	void serialize(const Textures& textures, std::ostream& os,
+				   Separator sep = Separator::a);
+	//! Serialize the texture and add the string serialization to the os
+	void serialize(const Texture& texture, std::ostream& os,
+				   Separator sep = Separator::a);
+
+	//! Generic template for deserialization.
+	template<typename T>
+	T deserialize(const std::string& str, Separator sep = Separator::a);
 
 	//! Return a World without objects with the string serialization.
-	World* deserializeWorld(const std::string& strWorld);
-	//! Complete the world with objects with the string serialization.
-	void deserializeObjects (World* world, const std::string& strObjects);
+	template<>
+	World* deserialize(const std::string& str, Separator sep);
+	//! Return a GroundTexture with the string serialization.
+	template<>
+	World::GroundTexture deserialize(const std::string& str, Separator sep);
 	//! Return a Thymio with the string serialization.
-	Thymio2* deserializeThymio(const std::string& strThymio);
+	void deserialize(Thymio2* thymio, const std::string& str, Separator sep = Separator::b);
 	//! Return a PhysicalObject with the string serialization.
-	PhysicalObject* deserializePhysObj(const std::string& strPo);
+	void deserialize(PhysicalObject* po, const std::string& str, Separator sep = Separator::b);
 	//! Return a Color with the string serialization.
-	Color deserializeColor(const std::string& strColor);
+	template<>
+	Color deserialize(const std::string& str, Separator sep);
 	//! Return a Point with the string serialization.
-	Point deserializePoint(const std::string& strPoint);
-
-	//! Return the value (double)
-	double getValue(size_t pos1, size_t pos2, const std::string& strValue);
+	template<>
+	Point deserialize(const std::string& str, Separator sep);
+	//! Return a Hull with the string serialization.
+	template<>
+	PhysicalObject::Hull deserialize(const std::string& str, Separator sep);
+	//! Return a Polygone with the string serialization.
+	template<>
+	Polygone deserialize(const std::string& str, Separator sep);
+	//! Return a vector of Texture with the string serialization.
+	template<>
+	Textures deserialize(const std::string& str, Separator sep);
+	//! Return a Texture with the string serialization.
+	template<>
+	Texture deserialize(const std::string& str, Separator sep);
 }
 
 #endif // SERIALIZE_H

@@ -124,7 +124,7 @@ namespace Enki
 			// Init World
 			if (init)
 			{
-				m_world = deserialize(line);
+				m_world = deserialize<World*>(line);
 				init = false;
 			}
 			else
