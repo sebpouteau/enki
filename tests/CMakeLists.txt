@@ -29,21 +29,30 @@ add_test(enki_test_Marxbot enkiTestWorld "Marxbot")
 add_test(enki_test_Khepera enkiTestWorld "Khepera")
 add_test(enki_test_Sbot enkiTestWorld "S-Bot")
 
-add_executable(randomWorld randomWorld.cpp Randomizer.cpp)
-target_link_libraries(randomWorld catch enki)
+add_executable(randomWorld randomWorld.cpp)
+target_link_libraries(randomWorld worldgenerator catch enki)
 
 add_test(random_world randomWorld)
 
-add_executable(serialization serialization.cpp Randomizer.cpp)
-target_link_libraries(serialization catch enki)
+add_executable(serialization serialization.cpp)
+target_link_libraries(serialization worldgenerator catch enki)
 
 add_test(serialize serialization "Serialization")
 add_test(deserialize serialization "Deserialization")
 
-add_executable(serializationBenchmarks serializationBenchmarks.cpp Randomizer.cpp)
-target_link_libraries(serializationBenchmarks enki)
+add_executable(serializationBenchmarks serializationBenchmarks.cpp)
+target_link_libraries(serializationBenchmarks worldgenerator enki)
 
 add_executable(network network.cpp)
 target_link_libraries(network enki ${dashel_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} catch)
+
+set(QT_USE_QTOPENGL TRUE)
+find_package(Qt4)
+find_package(OpenGL)
+include(${QT_USE_FILE})
+add_definitions(${QT_DEFINITIONS})
+
+add_executable(viewhull testHull.cpp)
+target_link_libraries(viewhull worldgenerator enki enkiviewer ${OPENGL_LIBRARIES} ${QT_LIBRARIES} ${EXTRA_LIBS})
 
 add_test(network_basic network "A basic connection")

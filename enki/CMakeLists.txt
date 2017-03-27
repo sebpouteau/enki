@@ -26,10 +26,16 @@ add_library(enki
 	robots/thymio2/Thymio2.cpp
 )
 
-set_target_properties(enki PROPERTIES VERSION ${LIB_VERSION_STRING} 
+add_library(worldgenerator
+	worldgenerator/Randomizer.cpp
+	worldgenerator/Randomizer.h
+	worldgenerator/WorldGenerator.cpp
+	worldgenerator/WorldGenerator.h
+)
+set_target_properties(enki PROPERTIES VERSION ${LIB_VERSION_STRING}
                                         SOVERSION ${LIB_VERSION_MAJOR})
 
-install(DIRECTORY . 
+install(DIRECTORY .
 	DESTINATION include/enki/
 	FILES_MATCHING PATTERN "*.h"
 )

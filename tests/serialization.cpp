@@ -1,20 +1,20 @@
 /*
-  Enki - a fast 2D robot simulator
-  Copyright © 2017 Nicolas Palard <nicolas.palard@etu.u-bordeaux.fr>
-  Copyright © 2017 Mathieu Lirzin <mathieu.lirzin@etu.u-bordeaux.fr>
+Enki - a fast 2D robot simulator
+Copyright © 2017 Nicolas Palard <nicolas.palard@etu.u-bordeaux.fr>
+Copyright © 2017 Mathieu Lirzin <mathieu.lirzin@etu.u-bordeaux.fr>
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 2 of the License, or
-  (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "catch.hpp"
@@ -22,10 +22,10 @@
 #include <enki/PhysicalEngine.h>
 #include <enki/robots/thymio2/Thymio2.h>
 #include <enki/Serialize.h>
-#include "Randomizer.h"
+#include <enki/worldgenerator/WorldGenerator.h>
 
-const double EPSILON = 0.0001;
-const int ITERATION_NUMBER = 10;
+const double EPSILON = pow(10, -2);
+const int ITERATION_NUMBER = 1000;
 
 using namespace Enki;
 using namespace std;
@@ -47,24 +47,24 @@ static void printWorld(World* w)
 		cerr << "--- Type : " << typeid(*o).name() << endl;
 		cerr << "--- PhysicalObject : " << o->pos.x << ";" << o->pos.y << endl;
 		cerr << "--- Color : " << endl
-			<< "----- " << o->getColor().r() << endl
-			<< "----- " << o->getColor().g() << endl
-			<< "----- " << o->getColor().b() << endl
-			<< "----- " << o->getColor().a() << endl;
+		<< "----- " << o->getColor().r() << endl
+		<< "----- " << o->getColor().g() << endl
+		<< "----- " << o->getColor().b() << endl
+		<< "----- " << o->getColor().a() << endl;
 	}
 }
 
 static bool equalsPoint(Point p1, Point p2)
 {
-	return (p1.x == p2.x && p1.y == p2.y);
+	return ( (fabs(p1.x - p2.x) <= EPSILON) && (fabs(p1.y - p2.y) <= EPSILON) );
 }
 
 static bool equalsColor(Color c1, Color c2)
 {
 	return (fabs(c1.r() - c2.r()) < EPSILON &&
-		fabs(c1.g() - c2.g()) < EPSILON &&
-		fabs(c1.b() - c2.b()) < EPSILON &&
-		fabs(c1.a() - c2.a()) < EPSILON);
+	fabs(c1.g() - c2.g()) < EPSILON &&
+	fabs(c1.b() - c2.b()) < EPSILON &&
+	fabs(c1.a() - c2.a()) < EPSILON);
 }
 
 // Return whether or not the thymios t1 and t2 are equals
@@ -74,13 +74,13 @@ static bool equalsThymio(Thymio2* t1, Thymio2* t2)
 {
 	if (!equalsPoint(t1->pos, t2->pos))
 	{
-		cerr << "[T] Not same position" << endl;
+		cerr << "[T] Not same position" << endl << "  [POS1]: " << t1->pos.x << "x" << t1->pos.y << endl << "  [POS2]: " << t2->pos.x << "x" << t2->pos.y << endl;
 		return false;
 	}
 	for (int i = 0; i < Thymio2::LED_COUNT; i++)
 	{
 		if (!equalsColor(t1->getColorLed((Thymio2::LedIndex)i),
-						 t2->getColorLed((Thymio2::LedIndex)i)))
+		t2->getColorLed((Thymio2::LedIndex)i)))
 		{
 			cerr << "[T] Not the same color" << endl;
 			return false;
@@ -149,10 +149,11 @@ static bool equalsWorld(World* w1, World* w2)
 }
 
 TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
+	WorldGenerator* gen = new WorldGenerator();
 	SECTION( "[S] World" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
+			World* w = gen->getWorld();
 
 			ostringstream outputStream;
 			serializeWorld(w, outputStream);
@@ -167,8 +168,8 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 	SECTION( "[S] Thymio2" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
-			Thymio2* t = randomThymio(w);
+			// Creating a random Thymio
+			Thymio2* t = gen->getRandomizer()->randThymio();
 
 			ostringstream outputStream;
 			serializeThymio(t, outputStream);
@@ -176,14 +177,17 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			ostringstream outputStream2;
 			serializeThymio(t, outputStream2);
 
+			delete t;
+
 			REQUIRE( outputStream.str() == outputStream2.str() );
+
 		}
 	}
 
 	SECTION( "[S] Color" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			Color c = randomColor();
+			Color c = gen->getRandomizer()->randColor();
 
 			ostringstream outputStream;
 			serializeColor(c, outputStream);
@@ -198,23 +202,29 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 	SECTION( "[S] World with one Thymio") {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
-			Thymio2* t = randomThymio(w);
-			w->addObject(t);
+			gen->add(Randomizer::THYMIO2_, 1);
+			World* w = gen->getWorld();
+
+			REQUIRE( w->objects.size() == 1);
 
 			std::string outputString = serialize(w);
 			std::string outputString2 = serialize(w);
 
 			REQUIRE( outputString == outputString2 );
+
+			// Since it's looping, we need to reset the world.
+			gen->resetWorld();
 		}
 	}
+	delete gen;
 }
 
 TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
+	WorldGenerator* gen = new WorldGenerator();
 	SECTION( "[D] Empty World" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
+			World* w = gen->getWorld();
 
 			ostringstream outputStream;
 			serializeWorld(w, outputStream);
@@ -225,14 +235,15 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			World* w2 = deserializeWorld(outputStream.str());
 			// this assume that w == w2
 			REQUIRE( equalsWorld(w1, w2) );
+			delete w1;
+			delete w2;
 		}
 	}
 
 	SECTION( "[D] Thymio2" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
-			Thymio2* t = randomThymio(w);
+			Thymio2* t = gen->getRandomizer()->randThymio();
 
 			ostringstream outputStream;
 			serializeThymio(t, outputStream);
@@ -242,13 +253,17 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 
 			Thymio2* t2 = deserializeThymio(outputStream.str());
 			REQUIRE( equalsThymio(t1, t2) );
+
+			delete t1;
+			delete t2;
+			delete t;
 		}
 	}
 
 	SECTION( "[D] Color" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			Color c = randomColor();
+			Color c = gen->getRandomizer()->randColor();
 
 			ostringstream outputStream;
 			serializeColor(c, outputStream);
@@ -264,9 +279,8 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 	SECTION( "[D] World with one Thymio" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			World* w = randomWorld();
-			Thymio2* t = randomThymio(w);
-			w->addObject(t);
+			gen->add(Randomizer::THYMIO2_, 1);
+			World* w = gen->getWorld();
 
 			std::string outputString = serialize(w);
 			World* w1 = deserialize(outputString);
@@ -275,6 +289,12 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 
 			World* w2 = deserialize(outputString);
 			REQUIRE( equalsWorld(w1, w2) );
+
+			gen->resetWorld();
+
+			delete w1;
+			delete w2;
 		}
 	}
+	delete gen;
 }
