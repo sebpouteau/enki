@@ -129,7 +129,7 @@ namespace Enki
 			}
 			else
 			{
-				deserialize(m_world, line, Separator::a, false);
+				deserialize(m_world, line, false);
 			}
 		}
 	}

@@ -17,33 +17,37 @@
  */
 
 #include "Factory.h"
-
+#include "robots/thymio2/Thymio2.h"
+#include "robots/s-bot/Sbot.h"
+#include "robots/e-puck/EPuck.h"
+#include "robots/khepera/Khepera.h"
+#include "robots/marxbot/Marxbot.h"
 
 Enki::PhysicalObject* Factory::initObject(int type) const
 {
 	switch (type)
 	{
-		case (int)ROBOT_TYPES::THYMIO2:
+		case (int)TypeObject::THYMIO2:
 		{
 			return new Enki::Thymio2();
 		}
-		case (int)ROBOT_TYPES::SBOT:
+		case (int)TypeObject::SBOT:
 		{
 			return new Enki::Sbot();
 		}
-		case (int)ROBOT_TYPES::MARXBOT:
+		case (int)TypeObject::MARXBOT:
 		{
 			return new Enki::Marxbot();
 		}
-		case (int)ROBOT_TYPES::KHEPERA:
+		case (int)TypeObject::KHEPERA:
 		{
 			return new Enki::Khepera();
 		}
-		case (int)ROBOT_TYPES::EPUCK:
+		case (int)TypeObject::EPUCK:
 		{
-			return new Enki::EPuck();
+			return new Enki::EPuck;
 		}
-		case (int)ROBOT_TYPES::PHYSICAL_OBJECT:
+		case (int)TypeObject::PHYS_OBJ:
 		{
 			return new Enki::PhysicalObject();
 		}

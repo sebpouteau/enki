@@ -21,17 +21,12 @@
 
 #include <stdio.h>
 #include "PhysicalEngine.h"
-#include "robots/thymio2/Thymio2.h"
-#include "robots/s-bot/Sbot.h"
-#include "robots/e-puck/EPuck.h"
-#include "robots/khepera/Khepera.h"
-#include "robots/marxbot/Marxbot.h"
 
 
 class Factory
 {
 public:
-	enum ROBOT_TYPES { PHYSICAL_OBJECT, THYMIO2, EPUCK, SBOT, MARXBOT, KHEPERA  };
+	enum TypeObject { PHYS_OBJ = 0, THYMIO2 = 1, EPUCK = 2, SBOT = 3, MARXBOT = 4, KHEPERA = 5 };
 
 	Enki::PhysicalObject* initObject(int type) const;
 };

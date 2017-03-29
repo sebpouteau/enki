@@ -25,7 +25,7 @@
 
 const int MAX_SIZE = 40000; // bytes
 const int MAX_TIME = 20; // ms
-const int NB_ITERATIONS = 1; 
+const int NB_ITERATIONS = 1;
 
 using namespace Enki;
 using namespace std;
@@ -621,7 +621,7 @@ TEST_CASE( "BenchMarks Time Deserialization", "[BenchMarks Time Deserialization]
 			while (true) {
 				string strSerialization = serialize(world, false);
 				timepoint start = chrono::system_clock::now();
-                deserialize(world, strSerialization, Enki::Separator::a, false);
+				deserialize(world, strSerialization, false);
 				timepoint end = chrono::system_clock::now();
 				
 				if (msTime(start, end) > MAX_TIME) { break; }
@@ -720,7 +720,7 @@ TEST_CASE( "BenchMarks Time Deserialization", "[BenchMarks Time Deserialization]
 			while (true) {
 				string strSerialization = serialize(world, false);
 				timepoint start = chrono::system_clock::now();
-                deserialize(world, strSerialization, Enki::Separator::a, false);
+                deserialize(world, strSerialization, false);
 				timepoint end = chrono::system_clock::now();
 				
 				if (msTime(start, end) > MAX_TIME) { break; }
@@ -778,7 +778,7 @@ TEST_CASE( "BenchMarks Time Deserialization", "[BenchMarks Time Deserialization]
 					timeSerialization = msTime(start, end);
 					world->addObject(createPhysObj(nbHull));
 				}
-			   
+
 				nbPhysObj = world->objects.size() - 30;
 				delete world;
 				if (nbPhysObj < 50) { break; }
@@ -820,7 +820,7 @@ TEST_CASE( "BenchMarks Time Deserialization", "[BenchMarks Time Deserialization]
 			while (true) {
 				string strSerialization = serialize(world, false);
 				timepoint start = chrono::system_clock::now();
-                deserialize(world, strSerialization, Enki::Separator::a, false);
+				deserialize(world, strSerialization, false);
 				timepoint end = chrono::system_clock::now();
 				
 				if (msTime(start, end) > MAX_TIME) { break; }

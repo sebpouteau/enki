@@ -35,7 +35,7 @@
 using namespace Enki;
 using namespace std;
 
-const double EPSILON = pow(10, -PRECISION);
+const double EPSILON = pow(10, -serialize_precision);
 
 static Robot* createRobot(int type)
 {	
@@ -365,33 +365,33 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 		Color color = random.randColor();
 
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(color, oss, Separator::a);
-            Color color1 = deserialize<Color>(oss.str(), Separator::a);
+			std::ostringstream oss;
+			int pos = 0;
+			serialize(color, oss);
+			Color color1 = deserialize<Color>(oss.str(), &pos);
 			REQUIRE(equalsColor(color, color1));
-
-            Color color2 = deserialize<Color>(oss.str(), Separator::a);
+			pos = 0;
+			Color color2 = deserialize<Color>(oss.str(), &pos);
 			REQUIRE(equalsColor(color, color2));
-
+			
 			color = color1;
 		}
 	}
 
 	SECTION("RT Thymio Init") {
 		Thymio2* thymio = random.randThymio();
-
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(thymio, oss, Separator::a, true);
+			std::ostringstream oss;
+			
+			serialize(thymio, oss, true);
 			
 			Thymio2* thymio1 = new Thymio2();
-			deserialize(thymio1, oss.str(),Separator::a, true);
+			deserialize(thymio1, oss.str(), true);
 			REQUIRE(equalsThymio(*thymio, *thymio1));
 			
 			Thymio2* thymio2 = new Thymio2();
-            deserialize(thymio2, oss.str(),Separator::a, true);
+			deserialize(thymio2, oss.str(), true);
 			REQUIRE(equalsThymio(*thymio, *thymio2));
 			
 			delete thymio;
@@ -404,18 +404,18 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 
 	SECTION("RT Thymio Update") {
 		Thymio2* thymio = random.randThymio();
-
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(thymio, oss, Separator::a, false);
-
+			std::ostringstream oss;
+			
+			serialize(thymio, oss, false);
+			
 			Thymio2* thymio1 = new Thymio2();
-            deserialize(thymio1, oss.str(),Separator::a, false);
+			deserialize(thymio1, oss.str(), false);
 			REQUIRE(equalsThymio(*thymio, *thymio1));
 			
 			Thymio2* thymio2 = new Thymio2();
-            deserialize(thymio2, oss.str(),Separator::a, false);
+			deserialize(thymio2, oss.str(), false);
 			REQUIRE(equalsThymio(*thymio, *thymio2));
 			
 			delete thymio;
@@ -429,18 +429,18 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Robot Init") {
 		int robot_type = random.randInt(1, 4); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(robot, oss, Separator::a, true);
+			std::ostringstream oss;
+			
+			serialize(robot, oss, true);
 			
 			Robot* robot1 = createRobot(robot_type);
-            deserialize(robot1, oss.str(), Separator::a, true);
+			deserialize(robot1, oss.str(), true);
 			REQUIRE(equalsRobots(*robot, *robot1));
 			
 			Robot* robot2 = createRobot(robot_type);
-            deserialize(robot2, oss.str(), Separator::a, true);
+			deserialize(robot2, oss.str(), true);
 			REQUIRE(equalsRobots(*robot, *robot2));
 			
 			delete robot;
@@ -454,18 +454,18 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Robot Update") {
 		int robot_type = random.randInt(1, 4); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(robot, oss, Separator::a, false);
-
+			std::ostringstream oss;
+			
+			serialize(robot, oss, false);
+			
 			Robot* robot1 = createRobot(robot_type);
-            deserialize(robot1, oss.str(), Separator::a, false);
+			deserialize(robot1, oss.str(), false);
 			REQUIRE(equalsRobots(*robot, *robot1));
 			
 			Robot* robot2 = createRobot(robot_type);
-            deserialize(robot2, oss.str(), Separator::a, false);
+			deserialize(robot2, oss.str(), false);
 			REQUIRE(equalsRobots(*robot, *robot2));
 			
 			delete robot;
@@ -479,18 +479,18 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Physical Object Init") {
 		for (int i = 0; i < NB_HULL + 1; i++) {
 			PhysicalObject* po = random.randPhysicalObject(i);
-
+			
 			for (int i = 0; i < NB_ITERATIONS; ++i) {
-                std::ostringstream oss;
-
-                serialize(po, oss, Separator::a, true);
-
+				std::ostringstream oss;
+				
+				serialize(po, oss, true);
+				
 				PhysicalObject* po1 = new PhysicalObject();
-                deserialize(po1, oss.str(), Separator::a, true);
+				deserialize(po1, oss.str(), true);
 				REQUIRE(equalsPhysObj(*po, *po1));
 				
 				PhysicalObject* po2 = new PhysicalObject();
-                deserialize(po2, oss.str(), Separator::a, true);
+				deserialize(po2, oss.str(), true);
 				REQUIRE(equalsPhysObj(*po, *po2));
 				
 				delete po;
@@ -501,46 +501,46 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 			delete po;
 		}
 	}
-
+	
 	SECTION("RT Physical Object Update") {
 		PhysicalObject* po = random.randPhysicalObject();
-
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
-            std::ostringstream oss;
-
-            serialize(po, oss, Separator::a, false);
-
+			std::ostringstream oss;
+			
+			serialize(po, oss, false);
+			
 			PhysicalObject* po1 = new PhysicalObject();
-            deserialize(po1, oss.str(), Separator::a, false);
+			deserialize(po1, oss.str(), false);
 			REQUIRE(equalsPhysObjBase(*po, *po1));
-				
+			
 			PhysicalObject* po2 = new PhysicalObject();
-            deserialize(po2, oss.str(), Separator::a, false);
+			deserialize(po2, oss.str(), false);
 			REQUIRE(equalsPhysObjBase(*po, *po2));
-				
+			
 			delete po;
 			delete po2;
 			po = po1;
 		}
-   
+		
 		delete po;
 	}
-
+	
 	SECTION("RT World Init") {
 		WorldGenerator* gen = new WorldGenerator();
 		gen->add(ANYTHING_, NB_OBJECTS);
-        World* world = initWorld(serialize(gen->getWorld(), true));
-        delete gen;
-
+		World* world = initWorld(serialize(gen->getWorld(), true));
+		delete gen;
+		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			string str = serialize(world, true);
-
+			
 			World* world1 = initWorld(str);
 			REQUIRE(equalsWorld(*world, *world1));
-
+			
 			World* world2 = initWorld(str);
 			REQUIRE(equalsWorld(*world, *world2));
-
+			
 			delete world;
 			delete world2;
 			world = world1;
@@ -559,15 +559,15 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 		
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			gen->genStep();
-
+			
 			string strUpdate = serialize(world, false);
-            deserialize(world1, strUpdate, Separator::a, false);
+			deserialize(world1, strUpdate, false);
 			REQUIRE(equalsWorld(*world, *world1));
-
-            deserialize(world2, strUpdate, Separator::a, false);
+			
+			deserialize(world2, strUpdate, false);
 			REQUIRE(equalsWorld(*world, *world2));
 		}
-
+		
 		delete gen;
 		delete world1;
 		delete world2;

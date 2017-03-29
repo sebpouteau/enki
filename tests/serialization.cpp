@@ -31,36 +31,7 @@ using namespace Enki;
 
 #define NB_ITERATIONS 10
 
-static const double EPSILON = pow(10, -PRECISION);
-
-std::vector<std::string>& splitAll(const std::string& str){
-	std::vector<std::string>* s = new std::vector<std::string>;
-	int pos = -1;
-	bool f = true;
-	while(f || pos != std::string::npos)
-	{
-		int deb = pos + 1;
-		pos =  std::string::npos;
-		Separator sep = Separator::a;
-		while ( sep != Separator::size){
-			if (pos < 0 ){
-				pos = str.find_first_of(*sep, deb);
-			}
-			else
-				pos = fmin (pos, str.find_first_of(*sep, deb));
-			sep = sep_next(sep);
-
-		}
-		std::string c = str.substr(deb, pos - deb);
-		if (c != "" )
-			s->push_back(c);
-		f=false;
-	}
-	// delete blank end
-	//s->pop_back();
-
-	return *s;
-}
+static const double EPSILON = pow(10, -serialize_precision);
 
 
 static int checkPoint(std::vector<std::string> &string, Point p, int start)
@@ -87,6 +58,8 @@ static int checkGroundTexture(std::vector<std::string> &string, World::GroundTex
 	int indice = start;
 	REQUIRE( fabs(stod(string[indice++]) - gt.width) <= EPSILON );
 	REQUIRE( fabs(stod(string[indice++]) - gt.height) <= EPSILON );
+	REQUIRE( fabs(stod(string[indice++]) - gt.width * gt.height) <= EPSILON );
+
 	for(int i = 0 ; i < gt.width * gt.height ; i++)
 	{
 		REQUIRE( fabs(stod(string[i + indice]) - gt.data[i]) <= EPSILON );
@@ -98,6 +71,8 @@ static int checkGroundTexture(std::vector<std::string> &string, World::GroundTex
 static int checkPolygone(std::vector<std::string> &string, Polygone poly, int start)
 {
 	int indice = start;
+	REQUIRE ( (stoi(string[indice++]) - poly.size()) <= EPSILON );
+
 	for (int i = 0; i < poly.size(); i++)
 	{
 		checkPoint(string, poly[i], indice+i*2);
@@ -109,6 +84,7 @@ static int checkPolygone(std::vector<std::string> &string, Polygone poly, int st
 static int checkHull(std::vector<std::string> &string, PhysicalObject::Hull hull, int start)
 {
 	int indice = start;
+	REQUIRE( (stoi(string[indice++]) - hull.size()) <= EPSILON );
 
 	for (PhysicalObject::Part p : hull)
 	{
@@ -119,9 +95,12 @@ static int checkHull(std::vector<std::string> &string, PhysicalObject::Hull hull
 		if (p.isTextured())
 		{
 			const Textures& textures = p.getTextures();
+			REQUIRE ( stoi(string[indice++]) == textures.size() );
+
 			for(int i = 0 ; i < textures.size() ; i++)
 			{
 				Texture t = textures[i];
+				REQUIRE ( stoi(string[indice++]) == t.size() );
 				for(int j = 0 ; j < t.size() ; j++)
 				{
 					indice = checkColor(string, t[j], indice);
@@ -145,11 +124,12 @@ static int checkRobot(std::vector<std::string> &string, const Robot &r, int star
 static int checkThymio(std::vector<std::string> &string, const Thymio2 &t, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::THYMIO2) );
-	REQUIRE ( stod(string[indice++]) == t.getId() );
+	REQUIRE ( stoi(string[indice++]) == Factory::TypeObject::THYMIO2);
+	REQUIRE ( stoi(string[indice++]) == t.getId() );
 
 	indice = checkRobot(string, t, indice);
-
+	REQUIRE ( stoi(string[indice++]) == Thymio2::LED_COUNT );
+	
 	for (int i = 0; i < Thymio2::LED_COUNT; ++i)
 	{
 		checkColor(string, t.getColorLed((Thymio2::LedIndex)i), indice + i*4);
@@ -161,8 +141,8 @@ static int checkThymio(std::vector<std::string> &string, const Thymio2 &t, int s
 static int checkEPuck(std::vector<std::string> &string, const EPuck &e, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::EPUCK) );
-	REQUIRE ( stod(string[indice++]) == e.getId() );
+	REQUIRE ( stoi(string[indice++]) == Factory::TypeObject::EPUCK );
+	REQUIRE ( stoi(string[indice++]) == e.getId() );
 
 	indice = checkRobot(string, e, indice);
 
@@ -172,8 +152,8 @@ static int checkEPuck(std::vector<std::string> &string, const EPuck &e, int star
 static int checkSbot(std::vector<std::string> &string, const Sbot &s, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::SBOT) );
-	REQUIRE ( stod(string[indice++]) == s.getId() );
+	REQUIRE ( stoi(string[indice++]) ==  Factory::TypeObject::SBOT );
+	REQUIRE ( stoi(string[indice++]) == s.getId() );
 
 	indice = checkRobot(string, s, indice);
 
@@ -183,8 +163,8 @@ static int checkSbot(std::vector<std::string> &string, const Sbot &s, int start)
 static int checkMarxbot(std::vector<std::string> &string, const Marxbot &m, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::MARXBOT) );
-	REQUIRE ( stod(string[indice++]) == m.getId() );
+	REQUIRE ( stoi(string[indice++]) == Factory::TypeObject::MARXBOT );
+	REQUIRE ( stoi(string[indice++]) == m.getId() );
 
 	indice = checkRobot(string, m, indice);
 
@@ -194,8 +174,8 @@ static int checkMarxbot(std::vector<std::string> &string, const Marxbot &m, int 
 static int checkKhepera(std::vector<std::string> &string, const Khepera &k, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::KHEPERA) );
-	REQUIRE ( stod(string[indice++]) == k.getId() );
+	REQUIRE ( stoi(string[indice++]) == Factory::TypeObject::KHEPERA );
+	REQUIRE ( stoi(string[indice++]) == k.getId() );
 
 	indice = checkRobot(string, k, indice);
 
@@ -205,8 +185,8 @@ static int checkKhepera(std::vector<std::string> &string, const Khepera &k, int 
 static int checkBasePhysObject(std::vector<std::string> &string, const PhysicalObject &po, int start)
 {
 	int indice = start;
-	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::ROBOT_TYPES::PHYSICAL_OBJECT) );
-	REQUIRE ( stod(string[indice++]) == po.getId() );
+	REQUIRE ( stoi(string[indice++]) == Factory::TypeObject::PHYS_OBJ );
+	REQUIRE ( stoi(string[indice++]) == po.getId() );
 
 	indice = checkPoint(string, po.pos, indice);
 	REQUIRE ( fabs(stod(string[indice++]) - po.angle) <= EPSILON );
@@ -220,7 +200,7 @@ static int checkPhysicalObject(std::vector<std::string> &string, const PhysicalO
 {
 	int indice = checkBasePhysObject(string, po, start);
 
-	REQUIRE ( stod(string[indice++]) == po.isCylindric() );
+	REQUIRE ( stoi(string[indice++]) == po.isCylindric() );
 
 	if (po.isCylindric())
 	{
@@ -246,11 +226,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Color c = r.randColor();
 
 			std::ostringstream stream;
-			serialize(c, stream, Separator::a);
+			serialize(c, stream);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkColor(splittedString, c, 0);
-			delete &splittedString;
 		}
 	}
 
@@ -260,11 +239,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			World::GroundTexture gt = r.randGroundTexture(0, 0);
 
 			std::ostringstream stream;
-			serialize(gt, stream, Separator::a, true);
+			serialize(gt, stream);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkGroundTexture(splittedString, gt, 0);
-			delete &splittedString;
 		}
 	}
 
@@ -274,10 +252,9 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			PhysicalObject::Hull hull = r.randHull(-1);
 
 			std::ostringstream stream;
-			serialize(hull, stream, Separator::a);
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			serialize(hull, stream);
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkHull(splittedString, hull, 0);
-			delete &splittedString;
 		}
 	}
 
@@ -287,11 +264,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			PhysicalObject* po = r.randPhysicalObject(0);
 
 			std::ostringstream stream;
-			serialize(po, stream, Separator::a, true);
+			serialize(po, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkPhysicalObject(splittedString, *po, 0);
-			delete &splittedString;
 			delete po;
 		}
 	}
@@ -302,11 +278,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			PhysicalObject* po = r.randPhysicalObject(-1);
 
 			std::ostringstream stream;
-			serialize(po, stream, Separator::a, true);
+			serialize(po, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkPhysicalObject(splittedString, *po, 0);
-			delete &splittedString;
 			delete po;
 		}
 	}
@@ -322,11 +297,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			}
 
 			std::ostringstream stream;
-			serialize(po, stream, Separator::a, true);
+			serialize(po, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkPhysicalObject(splittedString, *po, 0);
-			delete &splittedString;
 			delete po;
 		}
 	}
@@ -337,11 +311,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			PhysicalObject* po = r.randPhysicalObject(0);
 
 			std::ostringstream stream;
-			serialize(po, stream, Separator::a, false);
+			serialize(po, stream, false);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkBasePhysObject(splittedString, *po, 0);
-			delete &splittedString;
 			delete po;
 		}
 	}
@@ -352,12 +325,11 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Robot* robot = r.randRobot();
 
 			std::ostringstream stream;
-			serialize(robot, stream, Separator::a, true);
+			serialize(robot, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 
 			checkRobot(splittedString, *robot, 2);
-			delete &splittedString;
 			delete robot;
 		}
 	}
@@ -368,11 +340,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Thymio2* t = r.randThymio();
 
 			std::ostringstream stream;
-			serialize(t, stream, Separator::a, true);
+			serialize(t, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkThymio(splittedString, *t, 0);
-			delete &splittedString;
 			delete t;
 		}
 	}
@@ -383,11 +354,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			EPuck* e = r.randEPuck();
 
 			std::ostringstream stream;
-			serialize(e, stream, Separator::a, true);
+			serialize(e, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkEPuck(splittedString, *e, 0);
-			delete &splittedString;
 			delete e;
 		}
 	}
@@ -398,11 +368,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Sbot* s = r.randSbot();
 
 			std::ostringstream stream;
-			serialize(s, stream, Separator::a, true);
+			serialize(s, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkSbot(splittedString, *s, 0);
-			delete &splittedString;
 			delete s;
 		}
 	}
@@ -413,11 +382,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Marxbot* m = r.randMarxbot();
 
 			std::ostringstream stream;
-			serialize(m, stream, Separator::a, true);
+			serialize(m, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkMarxbot(splittedString, *m, 0);
-			delete &splittedString;
 			delete m;
 		}
 	}
@@ -428,11 +396,10 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			Khepera* k = r.randKhepera();
 
 			std::ostringstream stream;
-			serialize(k, stream, Separator::a, true);
+			serialize(k, stream, true);
 
-			std::vector<std::string> &splittedString = splitAll(stream.str());
+			std::vector<std::string> splittedString = split(stream.str(), TYPE_SEPARATOR);
 			checkKhepera(splittedString, *k, 0);
-			delete &splittedString;
 			delete k;
 		}
 	}
@@ -443,11 +410,11 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			World* world = new World(r.randInt(1, 800), r.randColor());
 			std::string serializedWorld = serialize(world, true);
 
-			std::vector<std::string> &splittedString = splitAll(serializedWorld);
+			std::vector<std::string> splittedString = split(serializedWorld, TYPE_SEPARATOR);
 
 			// World Information.
 			int j = 0;
-			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stoi(splittedString[j++]) == world->wallsType );
 			REQUIRE ( stod(splittedString[j++]) == world->r );
 
 			// Color.
@@ -457,7 +424,6 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			j = checkGroundTexture(splittedString, world->groundTexture, j);
 
 			delete world;
-			delete &splittedString;
 		}
 	}
 
@@ -467,11 +433,11 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			World* world = new World(r.randInt(1, 800), r.randInt(1, 800), r.randColor());
 			std::string serializedWorld = serialize(world, true);
 
-			std::vector<std::string> &splittedString = splitAll(serializedWorld);
+			std::vector<std::string> splittedString = split(serializedWorld, TYPE_SEPARATOR);
 
 			// World Information.
 			int j = 0;
-			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stoi(splittedString[j++]) == world->wallsType );
 			REQUIRE ( stod(splittedString[j++]) == world->w );
 			REQUIRE ( stod(splittedString[j++]) == world->h );
 
@@ -482,7 +448,6 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			j = checkGroundTexture(splittedString, world->groundTexture, j);
 
 			delete world;
-			delete &splittedString;
 		}
 	}
 
@@ -494,11 +459,11 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			World* world = new World(r.randInt(1, 800), r.randInt(1, 800), r.randColor(), gt);
 			std::string serializedWorld = serialize(world, true);
 
-			std::vector<std::string> &splittedString = splitAll(serializedWorld);
+			std::vector<std::string> splittedString = split(serializedWorld, TYPE_SEPARATOR);
 
 			// World Information.
 			int j = 0;
-			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stoi(splittedString[j++]) == world->wallsType );
 			REQUIRE ( stod(splittedString[j++]) == world->w );
 			REQUIRE ( stod(splittedString[j++]) == world->h );
 
@@ -509,7 +474,6 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			j = checkGroundTexture(splittedString, world->groundTexture, j);
 
 			delete world;
-			delete &splittedString;
 		}
 	}
 
@@ -521,11 +485,11 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			World* world = new World(r.randInt(1, 800), r.randColor(), gt);
 			std::string serializedWorld = serialize(world, true);
 
-			std::vector<std::string> &splittedString = splitAll(serializedWorld);
+			std::vector<std::string> splittedString = split(serializedWorld, TYPE_SEPARATOR);
 
 			// World Information.
 			int j = 0;
-			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stoi(splittedString[j++]) == world->wallsType );
 			REQUIRE ( stod(splittedString[j++]) == world->r );
 
 			// Color.
@@ -535,7 +499,6 @@ TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 			j = checkGroundTexture(splittedString, world->groundTexture, j);
 
 			delete world;
-			delete &splittedString;
 		}
 	}
 }
