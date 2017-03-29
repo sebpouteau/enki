@@ -48,6 +48,8 @@ namespace Enki
 			return Separator::i;
 		else if (sep == Separator::i)
 			return Separator::j;
+		else if (sep == Separator::j)
+			return Separator::size;
 		else
 			throw runtime_error("separator is too big");
 	}
@@ -198,6 +200,9 @@ namespace Enki
 		os << Factory::ROBOT_TYPES::SBOT << *sep;
 		os << sbot->getId() << *sep;		// id
 		serialize(static_cast<Robot*>(sbot), os, sep_next(sep));
+		os << *sep;
+		if (first)
+			serialize(sbot->getColor(), os, sep_next(sep));
 	}
 
 	void serialize(PhysicalObject* po, ostream& os, Separator sep, bool first)
@@ -460,6 +465,8 @@ namespace Enki
 	{
 		vector<string>& attrs = split(str, *sep);
 		deserialize(attrs[2], static_cast<Robot*>(sbot), sep_next(sep));
+		if (first)
+			sbot->setColor(deserialize<Color>(attrs[3],sep_next(sep)));
 		delete &attrs;
 	}
 
@@ -479,13 +486,10 @@ namespace Enki
 		po->pos = deserialize<Point>(attrs[2], next);
 		po->angle = stod(attrs[3]);
 
-		// change color, if userData not null fail
-		PhysicalObject::UserData* u= po->userData;
-		po->userData = NULL;
-		po->setColor(deserialize<Color>(attrs[4], next));
-		po->userData = u;
 		if(first)
 		{
+			po->setColor(deserialize<Color>(attrs[4], next));
+
 			int isCylindric = stoi(attrs[5]);
 
 			if (isCylindric)
@@ -517,7 +521,7 @@ namespace Enki
 			vector<std::string>& attrs = split(part, *next);
 
 			Polygone shape = deserialize<Polygone>(attrs[0], sep_next(next));
-			int height = stoi(attrs[1]);
+			double height = stod(attrs[1]);
 			int isTextured = stoi(attrs[2]);
 
 			if (isTextured)

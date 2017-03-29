@@ -37,8 +37,11 @@ add_test(random_world randomWorld)
 add_executable(serialization serialization.cpp)
 target_link_libraries(serialization worldgenerator catch enki)
 
-add_test(serialize serialization "Serialization")
-add_test(deserialize serialization "Deserialization")
+add_test(serialize serialization "Unitary TEST_CASE on serialization")
+
+add_executable(serializationRT serializationRT.cpp)
+target_link_libraries(serializationRT catch enki worldgenerator)
+add_test(serializationRT serializationRT "Robustness Test Serialization")
 
 add_executable(serializationBenchmarks serializationBenchmarks.cpp)
 target_link_libraries(serializationBenchmarks catch enki)

@@ -58,7 +58,7 @@ namespace Enki
 	//! Return the actual char associated with SEP.
 	inline char operator*(const Separator sep);
 	//! Return the next separator after SEP.
-	Separator next(const Separator sep);
+	Separator sep_next(const Separator sep);
 
 	//! Return the string serialization of world
 	std::string serialize(World *world, bool first = false);
